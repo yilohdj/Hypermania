@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Netcode.Rollback
+namespace Utils
 {
     public readonly struct Instant : IComparable<Instant>, IEquatable<Instant>
     {
@@ -41,22 +41,4 @@ namespace Netcode.Rollback
             );
     }
 
-    public sealed class Arc<T> where T: struct
-    {
-        private T _value;
-        public ref T Value => ref _value;
-        public Arc(in T value)
-        {
-            _value = value;
-        }
-    }
-
-    public static class Helpers
-    {
-        public static ulong MillisSinceEpoch()
-        {
-            ulong millis = (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            return millis;
-        }
-    }
 }

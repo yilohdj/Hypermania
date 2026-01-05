@@ -1,23 +1,30 @@
 using System;
-using System.Collections.Generic;
 using Netcode.Rollback.Network;
 using UnityEngine.Assertions;
+using Utils;
 
 namespace Netcode.Rollback
 {
-    public struct GameStateCell<TState> where TState : struct
+    public struct GameStateCell<TState> where TState : IState<TState>
     {
         // TODO: lock?
-        public Arc<GameState<TState>> State;
+        public GameStateCtx State;
         public void Save(Frame frame, in TState data, ulong checksum)
         {
-            State.Value.Frame = frame;
-            State.Value.Data = data;
-            State.Value.Checksum = checksum;
+            State.Frame = frame;
+            int sz = data.SerdeSize();
+            if (State.Data == null || State.Data.Length < sz) State.Data = new byte[sz];
+            data.Serialize(State.Data);
+            State.Checksum = checksum;
+        }
+        public void Load(out TState data)
+        {
+            data = default;
+            data.Deserialize(State.Data);
         }
     }
 
-    public struct SavedStates<TState> where TState : struct
+    public struct SavedStates<TState> where TState : IState<TState>
     {
         public GameStateCell<TState>[] States;
         public SavedStates(uint maxPrediction)
@@ -28,12 +35,12 @@ namespace Netcode.Rollback
             {
                 states[i] = new GameStateCell<TState>
                 {
-                    State = new Arc<GameState<TState>>(new GameState<TState>
+                    State = new GameStateCtx
                     {
                         Frame = Frame.NullFrame,
                         Data = default,
                         Checksum = default
-                    })
+                    }
                 };
             }
             States = states;
@@ -48,7 +55,7 @@ namespace Netcode.Rollback
     }
 
     public class SyncLayer<TState, TInput>
-        where TState : struct
+        where TState : IState<TState>
         where TInput : struct, IInput<TInput>
     {
         private int _numPlayers;
@@ -105,7 +112,7 @@ namespace Netcode.Rollback
             Assert.IsTrue(frameToLoad >= _currentFrame - (int)_maxPrediction, "cannot load frame outside of prediction window");
 
             GameStateCell<TState> cell = _savedStates.GetCell(frameToLoad);
-            Assert.IsTrue(cell.State.Value.Frame == frameToLoad);
+            Assert.IsTrue(cell.State.Frame == frameToLoad);
             _currentFrame = frameToLoad;
 
             return RollbackRequest<TState, TInput>.From(new RollbackRequest<TState, TInput>.LoadGameState
@@ -190,7 +197,7 @@ namespace Netcode.Rollback
         public GameStateCell<TState> SavedStateByFrame(Frame frame)
         {
             GameStateCell<TState> cell = _savedStates.GetCell(frame);
-            if (cell.State.Value.Frame == frame) { return cell; }
+            if (cell.State.Frame == frame) { return cell; }
             throw new InvalidOperationException($"state missing for frame {frame}");
         }
 

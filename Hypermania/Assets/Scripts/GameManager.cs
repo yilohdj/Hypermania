@@ -13,8 +13,8 @@ public class GameManager : MonoBehaviour
     private GameObject _bob1;
     [SerializeField]
     private GameObject _bob2;
-    private GameState _curState;
-    private P2PSession<GameState, Input, CSteamID> _session;
+    private GameStateCtx _curState;
+    private P2PSession<GameStateCtx, Input, CSteamID> _session;
 
     private bool _playing;
     private uint _waitRemaining;
@@ -73,9 +73,7 @@ public class GameManager : MonoBehaviour
     public void StartGame() => StartCoroutine(StartGameRoutine());
     IEnumerator StartGameRoutine()
     {
-        Debug.Log($"{_client.Peer}, {_client.Me}, {_client.CurrentLobby}");
         if (!_client.HasPeer) { yield break; }
-
         var task = _client.StartGame();
         while (!task.IsCompleted)
             yield return null;
@@ -86,14 +84,14 @@ public class GameManager : MonoBehaviour
         }
         var handles = task.Result;
 
-        _curState = GameState.New();
+        _curState = GameStateCtx.New();
         SessionBuilder<Input, CSteamID> builder = new SessionBuilder<Input, CSteamID>().WithNumPlayers(2).WithFps(64);
         foreach ((CSteamID id, int handle) in handles)
         {
             Debug.Log($"[Game] Adding player with id {id} and handle {handle}");
             builder.AddPlayer(new PlayerType<CSteamID> { Kind = _client.Me == id ? PlayerKind.Local : PlayerKind.Remote, Address = id }, new PlayerHandle(handle));
         }
-        _session = builder.StartP2PSession<GameState>(_client);
+        _session = builder.StartP2PSession<GameStateCtx>(_client);
         _playing = true;
     }
 
@@ -140,13 +138,13 @@ public class GameManager : MonoBehaviour
             _session.AddLocalInput(new PlayerHandle(_client.MyHandle), new Input(f1Input));
             try
             {
-                List<RollbackRequest<GameState, Input>> requests = _session.AdvanceFrame();
-                foreach (RollbackRequest<GameState, Input> request in requests)
+                List<RollbackRequest<GameStateCtx, Input>> requests = _session.AdvanceFrame();
+                foreach (RollbackRequest<GameStateCtx, Input> request in requests)
                 {
                     switch (request.Kind)
                     {
                         case RollbackRequestKind.SaveGameStateReq:
-                            RollbackRequest<GameState, Input>.SaveGameState saveReq = request.GetSaveGameStateReq();
+                            RollbackRequest<GameStateCtx, Input>.SaveGameState saveReq = request.GetSaveGameStateReq();
                             saveReq.Cell.Save(saveReq.Frame, _curState, _curState.Checksum());
                             break;
                         case RollbackRequestKind.LoadGameStateReq:

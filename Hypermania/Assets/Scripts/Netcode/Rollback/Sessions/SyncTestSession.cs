@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using Netcode.Rollback.Network;
 using UnityEngine.Assertions;
+using Utils;
 
 namespace Netcode.Rollback.Sessions
 {
     public class SyncTestSession<TState, TInput, TAddress>
         where TInput : struct, IInput<TInput>
-        where TState : struct
+        where TState : IState<TState>
     {
         private int _numPlayers;
         private uint _maxPrediction;
@@ -99,10 +100,10 @@ namespace Netcode.Rollback.Sessions
             try
             {
                 GameStateCell<TState> cell = _syncLayer.SavedStateByFrame(frameToCheck);
-                if (_checksumHistory.TryGetValue(cell.State.Value.Frame, out var cs)) { return cs == cell.State.Value.Checksum; }
+                if (_checksumHistory.TryGetValue(cell.State.Frame, out var cs)) { return cs == cell.State.Checksum; }
                 else
                 {
-                    _checksumHistory.Add(cell.State.Value.Frame, cell.State.Value.Checksum);
+                    _checksumHistory.Add(cell.State.Frame, cell.State.Checksum);
                     return true;
                 }
             }

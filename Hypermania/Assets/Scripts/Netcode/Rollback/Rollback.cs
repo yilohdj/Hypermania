@@ -1,71 +1,10 @@
 using System;
-using System.Buffers.Binary;
+using Utils;
 using System.Collections.Generic;
-using System.Globalization;
 using Netcode.Rollback.Network;
 
 namespace Netcode.Rollback
 {
-    public struct Frame : IComparable<Frame>, IEquatable<Frame>, IFormattable, ISerializable
-    {
-        public int No;
-        public static readonly Frame NullFrame = new Frame { No = -1 };
-        public static readonly Frame FirstFrame = new Frame { No = 0 };
-
-        public int CompareTo(Frame other) =>
-            No.CompareTo(other.No);
-
-        public bool Equals(Frame other) =>
-            No == other.No;
-
-        public override bool Equals(object obj) =>
-            obj is Frame other && Equals(other);
-
-        public readonly override int GetHashCode() =>
-            No.GetHashCode();
-
-        public static Frame operator +(Frame left, int right) => new Frame { No = left.No + right };
-        public static Frame operator -(Frame left, int right) => new Frame { No = left.No - right };
-        public static int operator -(Frame left, Frame right) => left.No - right.No;
-
-        public static bool operator ==(Frame left, Frame right) =>
-            left.Equals(right);
-
-        public static bool operator !=(Frame left, Frame right) =>
-            !left.Equals(right);
-
-        public static bool operator <(Frame a, Frame b) =>
-            a.CompareTo(b) < 0;
-
-        public static bool operator >(Frame a, Frame b) =>
-            a.CompareTo(b) > 0;
-
-        public static bool operator <=(Frame a, Frame b) =>
-            a.CompareTo(b) <= 0;
-
-        public static bool operator >=(Frame a, Frame b) =>
-            a.CompareTo(b) >= 0;
-
-        public static Frame Max(Frame a, Frame b) => a.No < b.No ? b : a;
-        public static Frame Min(Frame a, Frame b) => a.No > b.No ? b : a;
-        public override string ToString() => No.ToString();
-
-        public string ToString(string format, IFormatProvider formatProvider) => No.ToString(format, formatProvider);
-
-        public int Deserialize(ReadOnlySpan<byte> inBytes)
-        {
-            No = BinaryPrimitives.ReadInt32LittleEndian(inBytes);
-            return sizeof(int);
-        }
-        public int Serialize(Span<byte> outBytes)
-        {
-            BinaryPrimitives.WriteInt32LittleEndian(outBytes, No);
-            return sizeof(int);
-        }
-        public int SerdeSize() { return sizeof(int); }
-    }
-
-
     public readonly struct PlayerHandle : IFormattable
     {
         public readonly int Id;
@@ -227,7 +166,7 @@ namespace Netcode.Rollback
     }
 
     public struct RollbackRequest<TState, TInput>
-        where TState : struct
+        where TState : IState<TState>
         where TInput : IInput<TInput>
     {
         public struct SaveGameState
@@ -272,25 +211,8 @@ namespace Netcode.Rollback
     }
 
     public interface IInput<TSelf> : IEquatable<TSelf>, ISerializable { }
-    public interface IState<TSelf> { }
+    public interface IState<TSelf>: ISerializable { }
     public interface IAddress<TSelf> : IEquatable<TSelf> { }
-
-    public interface ISerializable
-    {
-        public abstract int SerdeSize();
-        public abstract int Serialize(Span<byte> outBytes);
-        public abstract int Deserialize(ReadOnlySpan<byte> inBytes);
-        public void EnsureBufferSize(ReadOnlySpan<byte> buf)
-        {
-            if (buf.Length < SerdeSize()) { throw new ArgumentException("input buffer too small"); }
-        }
-    }
-
-    public static class Serializer<T> where T : ISerializable
-    {
-        private readonly static T _sample = default;
-        public static int DefaultSize() { return _sample.SerdeSize(); }
-    }
 
     public interface INonBlockingSocket<TAddress>
     {

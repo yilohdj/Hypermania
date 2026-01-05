@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +7,15 @@ using Utils;
 
 namespace Netcode.Rollback.Network
 {
+    public static class Helpers
+    {
+        public static ulong MillisSinceEpoch()
+        {
+            ulong millis = (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            return millis;
+        }
+    }
+
     public struct InputBytes
     {
         public Frame Frame;

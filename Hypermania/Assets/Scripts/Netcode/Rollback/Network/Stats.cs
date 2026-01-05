@@ -1,5 +1,3 @@
-using System;
-
 namespace Netcode.Rollback.Network
 {
     public struct NetworkStats

@@ -172,7 +172,7 @@ namespace Netcode.Rollback.Sessions
         }
 
         public P2PSession<TState, TInput, TAddress> StartP2PSession<TState>(INonBlockingSocket<TAddress> socket)
-            where TState : struct
+            where TState : IState<TState>
         {
             for (int i = 0; i < _numPlayers; i++)
             {
@@ -226,7 +226,7 @@ namespace Netcode.Rollback.Sessions
         }
 
         public SyncTestSession<TState, TInput, TAddress> StartSynctestSession<TState>()
-            where TState : struct
+            where TState : IState<TState>
         {
             if (_checkDist >= _maxPrediction) { throw new InvalidOperationException("check distance too big"); }
 

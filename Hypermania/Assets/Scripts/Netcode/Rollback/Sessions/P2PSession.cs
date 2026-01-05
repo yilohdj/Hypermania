@@ -72,7 +72,7 @@ namespace Netcode.Rollback.Sessions
     }
 
     public class P2PSession<TState, TInput, TAddress>
-        where TState : struct
+        where TState : IState<TState>
         where TInput : struct, IInput<TInput>
     {
         const uint MIN_RECOMMENDATION = 3;
@@ -617,7 +617,7 @@ namespace Netcode.Rollback.Sessions
             if (frameToSend <= _syncLayer.LastConfirmedFrame && frameToSend <= _syncLayer.LastSavedFrame)
             {
                 GameStateCell<TState> cell = _syncLayer.SavedStateByFrame(frameToSend);
-                ulong? checkSum = cell.State.Value.Checksum;
+                ulong? checkSum = cell.State.Checksum;
                 if (checkSum != null)
                 {
                     foreach (UdpProtocol<TInput, TAddress> remote in _playerRegistry.Remotes.Values)

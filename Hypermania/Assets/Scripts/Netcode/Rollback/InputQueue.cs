@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.Assertions;
+using Utils;
 
 namespace Netcode.Rollback
 {

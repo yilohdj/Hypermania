@@ -15,9 +15,20 @@ namespace Utils
 
         public Deque(int capacity = 8)
         {
-            _buffer = new T[Mathf.Max(2, capacity)];
+            _buffer = new T[Mathf.Max(2, NextPow2(capacity))];
             _head = 0;
             _count = 0;
+        }
+
+        private static int NextPow2(int v)
+        {
+            v--;
+            v |= v >> 1;
+            v |= v >> 2;
+            v |= v >> 4;
+            v |= v >> 8;
+            v |= v >> 16;
+            return v + 1;
         }
 
         private int Mask => _buffer.Length - 1;
