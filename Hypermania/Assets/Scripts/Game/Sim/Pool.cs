@@ -43,6 +43,7 @@ namespace Game.Sim
                 throw new InvalidOperationException("Double free / invalid release");
 
             _objects[ind] = default!;
+            _objects[ind].valid = false;
             _freeList.PushBack(ind);
         }
 
