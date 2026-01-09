@@ -56,5 +56,11 @@ namespace Game.Sim
         SpecialAttack = 1 << 7,
         SuperAttack = 1 << 8,
         Grab = 1 << 9,
+        Mania1 = 1 << 10,
+        Mania2 = 1 << 11,
+        Mania3 = 1 << 12,
+        Mania4 = 1 << 13,
+        Mania5 = 1 << 14,
+        Mania6 = 1 << 15,
     }
 }

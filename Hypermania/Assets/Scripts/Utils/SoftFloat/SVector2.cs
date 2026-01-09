@@ -639,6 +639,7 @@ namespace Utils.SoftFloat
             return new SVector2((sfloat)v.x, (sfloat)v.y);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector2(SVector2 v)
         {
             return new Vector2((float)v.x, (float)v.y);
