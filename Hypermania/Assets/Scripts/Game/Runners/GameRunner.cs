@@ -31,13 +31,40 @@ namespace Game.Runners
         /// you derive from this class, it must be initialized on Init();
         /// </summary>
         protected CharacterConfig[] _characters;
+        protected InputBuffer _inputBuffer;
+        protected bool _initialized;
+        protected float _time;
 
-        public abstract void Init(
+        public virtual void Init(
             List<(PlayerHandle playerHandle, PlayerKind playerKind, SteamNetworkingIdentity address)> players,
             P2PClient client
-        );
+        )
+        {
+            // TODO: take in character selections from matchmaking/lobby
+            CharacterConfig sampleConfig = _config.Get(Character.SampleFighter);
+            _characters = new CharacterConfig[players.Count];
+            for (int i = 0; i < players.Count; i++)
+            {
+                _characters[i] = sampleConfig;
+            }
+            _curState = GameState.Create(_characters);
+            _view.Init(_characters);
+            _inputBuffer = new InputBuffer();
+            _time = 0;
+            _initialized = true;
+        }
+
         public abstract void Poll(float deltaTime);
-        public abstract void DeInit();
+
+        public virtual void DeInit()
+        {
+            _initialized = false;
+            _time = 0;
+            _inputBuffer = null;
+            _view.DeInit();
+            _curState = null;
+            _characters = null;
+        }
 
         public void OnDrawGizmos()
         {
@@ -71,12 +98,12 @@ namespace Game.Runners
                     else
                         continue;
 
-                    Vector2 centerLocal = (Vector2)box.CenterLocal;
+                    Vector2 centerLocal = box.CenterLocal;
                     if (_curState.Fighters[i].FacingDir == FighterFacing.Left)
                     {
                         centerLocal.x *= -1;
                     }
-                    Vector2 sizeLocal = (Vector2)box.SizeLocal;
+                    Vector2 sizeLocal = box.SizeLocal;
 
                     Vector3 centerWorld = t.TransformPoint(new Vector3(centerLocal.x, centerLocal.y, 0f));
                     Vector3 halfWorldX = t.TransformVector(new Vector3(sizeLocal.x * 0.5f, 0f, 0f));

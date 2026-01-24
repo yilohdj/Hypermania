@@ -12,6 +12,12 @@ using Utils.SoftFloat;
 
 namespace Game.Sim
 {
+    public enum GameMode
+    {
+        Fighting,
+        Mania,
+    }
+
     [MemoryPackable]
     public partial class GameState : IState<GameState>
     {
@@ -62,6 +68,8 @@ namespace Game.Sim
 
         public Frame Frame;
         public FighterState[] Fighters;
+        public ManiaState[] Manias;
+        public GameMode GameMode;
 
         /// <summary>
         /// Use this static builder instead of the constructor for creating new GameStates. This is because MemoryPack,
@@ -75,11 +83,21 @@ namespace Game.Sim
             GameState state = new GameState();
             state.Frame = Frame.FirstFrame;
             state.Fighters = new FighterState[characters.Length];
+            state.Manias = new ManiaState[characters.Length];
+            state.GameMode = GameMode.Fighting;
             for (int i = 0; i < characters.Length; i++)
             {
                 sfloat xPos = i - ((sfloat)characters.Length - 1) / 2;
                 FighterFacing facing = xPos > 0 ? FighterFacing.Left : FighterFacing.Right;
                 state.Fighters[i] = FighterState.Create(new SVector2(xPos, sfloat.Zero), facing);
+                state.Manias[i] = ManiaState.Create(
+                    new ManiaConfig
+                    {
+                        NumKeys = 4,
+                        HitHalfRange = 8,
+                        MissHalfRange = 6,
+                    }
+                );
             }
             return state;
         }
@@ -96,18 +114,68 @@ namespace Game.Sim
             }
             Frame += 1;
 
-            // This function internally appies changes to the fighter's velocity based on movement inputs
-            for (int i = 0; i < Fighters.Length; i++)
+            if (GameMode == GameMode.Fighting)
             {
-                Fighters[i].ApplyMovementIntent(inputs[i].input, characters[i], config);
+                // This function internally appies changes to the fighter's velocity based on movement inputs
+                for (int i = 0; i < Fighters.Length; i++)
+                {
+                    Fighters[i].ApplyMovementIntent(inputs[i].input, characters[i], config);
+                }
+                // If a player applies inputs to start a state at the start of the frame, we should apply those immediately
+                for (int i = 0; i < Fighters.Length; i++)
+                {
+                    Fighters[i].ApplyActiveState(Frame, inputs[i].input, characters[i], config);
+                }
+            }
+            else if (GameMode == GameMode.Mania)
+            {
+                for (int i = 0; i < Manias.Length; i++)
+                {
+                    List<ManiaEvent> maniaEvents = new List<ManiaEvent>();
+                    Manias[i].Tick(Frame, inputs[i].input, maniaEvents);
+                    // TODO: make note hits do something to the character here
+
+                    foreach (ManiaEvent ev in maniaEvents)
+                    {
+                        switch (ev.Kind)
+                        {
+                            case ManiaEventKind.End:
+                                GameMode = GameMode.Fighting;
+                                break;
+                        }
+                    }
+                }
             }
 
-            // If a player applies inputs to start a state at the start of the frame, we should apply those immediately
+            DoCollisionStep(characters, config);
+
+            // Apply any velocities set during movement or through knockback.
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i].ApplyActiveState(Frame, inputs[i].input, characters[i], config);
+                Fighters[i].UpdatePosition(Frame, config);
             }
 
+            for (int i = 0; i < Fighters.Length; i++)
+            {
+                Fighters[i].FaceTowards(Fighters[i ^ 1].Position);
+            }
+
+            // Tick the state machine, decreasing any forms of hitstun/blockstun and/or move timers, allowing us to
+            // become actionable next frame, etc.
+            for (int i = 0; i < Fighters.Length; i++)
+            {
+                Fighters[i].TickStateMachine(Frame, config);
+            }
+
+            // Apply and change the state that derives only from passive factors (movements, the Mode, etc)
+            for (int i = 0; i < Fighters.Length; i++)
+            {
+                Fighters[i].ApplyPassiveState(Frame, config);
+            }
+        }
+
+        private void DoCollisionStep(CharacterConfig[] characters, GlobalConfig config)
+        {
             // Each fighter then adds their hit/hurtboxes to the physics context, which will solve and find all
             // collisions. It is our job to then handle them.
             for (int i = 0; i < Fighters.Length; i++)
@@ -159,9 +227,39 @@ namespace Game.Sim
 
             if (HurtHitCollisions.Count > 0)
             {
-                foreach (var c in HurtHitCollisions.Values)
+                foreach ((var owners, var collision) in HurtHitCollisions)
                 {
-                    HandleCollision(c, config);
+                    //owners[0] hits owners[1]
+                    HandleCollision(collision, config);
+
+                    //to start a rhythm combo, we must sure that the move was not traded
+                    if (
+                        collision.BoxA.Data.StartsRhythmCombo
+                        && !HurtHitCollisions.ContainsKey((owners.Item2, owners.Item1))
+                    )
+                    {
+                        // TODO: fix me, 30.72 is hardcoded ticks/beat
+                        // make the start frame always be on a multiple of 4 beats starting from 0
+                        sfloat ticksPerBeat = (sfloat)30.72;
+                        int barInterval = Mathsf.RoundToInt(ticksPerBeat * 4);
+                        Frame baseSt = Frame + 10;
+                        Frame stFrame = baseSt - baseSt.No % barInterval + barInterval;
+
+                        for (int i = 0; i < 16; i++)
+                        {
+                            Manias[owners.Item1]
+                                .QueueNote(
+                                    i % 4,
+                                    new ManiaNote
+                                    {
+                                        Length = 0,
+                                        Tick = stFrame + Mathsf.RoundToInt(ticksPerBeat / 2 * i),
+                                    }
+                                );
+                        }
+                        Manias[owners.Item1].Enable(stFrame + Mathsf.RoundToInt(ticksPerBeat / 2 * 16));
+                        GameMode = GameMode.Mania;
+                    }
                 }
             }
             else if (clank.HasValue)
@@ -177,30 +275,6 @@ namespace Game.Sim
             Physics.Clear();
             Collisions.Clear();
             HurtHitCollisions.Clear();
-
-            // Apply any velocities set during movement or through knockback.
-            for (int i = 0; i < Fighters.Length; i++)
-            {
-                Fighters[i].UpdatePosition(Frame, config);
-            }
-
-            for (int i = 0; i < Fighters.Length; i++)
-            {
-                Fighters[i].FaceTowards(Fighters[i ^ 1].Position);
-            }
-
-            // Tick the state machine, decreasing any forms of hitstun/blockstun and/or move timers, allowing us to
-            // become actionable next frame, etc.
-            for (int i = 0; i < inputs.Length && i < Fighters.Length; i++)
-            {
-                Fighters[i].TickStateMachine(Frame, config);
-            }
-
-            // Apply and change the state that derives only from passive factors (movements, the Mode, etc)
-            for (int i = 0; i < inputs.Length && i < Fighters.Length; i++)
-            {
-                Fighters[i].ApplyPassiveState(Frame, config);
-            }
         }
 
         private void HandleCollision(Physics<BoxProps>.Collision c, GlobalConfig config)
@@ -209,17 +283,17 @@ namespace Game.Sim
             {
                 Fighters[c.BoxB.Owner].ApplyHit(c.BoxA.Data);
             }
-            if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
+            else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
             {
                 Fighters[c.BoxA.Owner].ApplyHit(c.BoxB.Data);
             }
-            if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
+            else if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
             {
                 // TODO: check if moves are allowed to clank
                 Fighters[c.BoxA.Owner].ApplyClank(config);
                 Fighters[c.BoxB.Owner].ApplyClank(config);
             }
-            if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
+            else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
             {
                 // TODO: more advanced pushing/hitbox handling, e.g. if someone airborne they shouldn't be able to be
                 // pushed

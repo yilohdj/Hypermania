@@ -19,14 +19,18 @@ namespace Design.Animation
         public int Damage;
         public int HitstunTicks;
         public int BlockstunTicks;
+        public bool StartsRhythmCombo;
         public Vector2 Knockback;
 
+        // NOTE: ensure that any new fields added above are added to the equals implementation: otherwise they will not
+        // be editable in the move builder
         public bool Equals(BoxProps other) =>
             Kind == other.Kind
             && HitstunTicks == other.HitstunTicks
             && Damage == other.Damage
             && BlockstunTicks == other.BlockstunTicks
-            && Knockback == other.Knockback;
+            && Knockback == other.Knockback
+            && StartsRhythmCombo == other.StartsRhythmCombo;
 
         public override bool Equals(object obj) => obj is BoxProps other && Equals(other);
 

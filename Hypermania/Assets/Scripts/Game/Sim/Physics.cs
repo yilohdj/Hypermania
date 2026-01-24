@@ -64,7 +64,6 @@ namespace Game.Sim
 
         private readonly Pool<BoxEntry> _boxPool;
         private readonly List<int> _boxInds;
-        private readonly Dictionary<ulong, Collision> _collisions = new Dictionary<ulong, Collision>(64);
 
         public Physics(int maxHitboxes)
         {
@@ -122,7 +121,6 @@ namespace Game.Sim
         public void Clear()
         {
             _boxPool.Clear();
-            _collisions.Clear();
             _boxInds.Clear();
         }
     }

@@ -68,7 +68,7 @@ namespace Design.Animation.Editors
 
             if (model == null || model.CharacterPrefab == null)
             {
-                DrawCentered(rect, "Assign Character Prefab");
+                Utils.DrawCentered(rect, "Assign Character Prefab");
                 return;
             }
 
@@ -76,7 +76,7 @@ namespace Design.Animation.Editors
 
             if (_previewGO == null)
             {
-                DrawCentered(rect, "Preview instance not available");
+                Utils.DrawCentered(rect, "Preview instance not available");
                 return;
             }
 
@@ -89,6 +89,8 @@ namespace Design.Animation.Editors
             Texture tex = Render(rect, model);
             if (tex != null)
                 GUI.DrawTexture(rect, tex, ScaleMode.StretchToFill, false);
+
+            GridBackground.DrawGridWithLabels(rect, _preview.camera);
 
             DrawHitboxOverlay(rect, model);
 
@@ -214,11 +216,11 @@ namespace Design.Animation.Editors
             void HandleBox(int i)
             {
                 var box = frame.Boxes[i];
-                Rect guiRect = LocalBoxToGuiRect(rect, cam, root, box);
+                Rect guiRect = Utils.LocalBoxToGuiRect(rect, cam, root, box);
 
                 float thickness = (i == model.SelectedBoxIndex) ? 2f : 1f;
                 Color color = box.Props.Kind == HitboxKind.Hurtbox ? Color.blue : Color.red;
-                DrawRectOutline(guiRect, thickness, color);
+                Utils.DrawRectOutline(guiRect, thickness, color);
 
                 GUI.Label(
                     new Rect(guiRect.xMin, guiRect.yMin - 16, 180, 16),
@@ -565,59 +567,6 @@ namespace Design.Animation.Editors
                     }
                 }
             }
-        }
-
-        private static Rect LocalBoxToGuiRect(Rect rect, Camera cam, Transform root, BoxData box)
-        {
-            float hw = box.SizeLocal.x * 0.5f;
-            float hh = box.SizeLocal.y * 0.5f;
-
-            Vector3 w0 = root.TransformPoint(new Vector3(box.CenterLocal.x - hw, box.CenterLocal.y - hh, 0));
-            Vector3 w1 = root.TransformPoint(new Vector3(box.CenterLocal.x + hw, box.CenterLocal.y + hh, 0));
-
-            Vector2 g0 = WorldToGui(rect, cam, w0);
-            Vector2 g1 = WorldToGui(rect, cam, w1);
-
-            return Rect.MinMaxRect(
-                Mathf.Min(g0.x, g1.x),
-                Mathf.Min(g0.y, g1.y),
-                Mathf.Max(g0.x, g1.x),
-                Mathf.Max(g0.y, g1.y)
-            );
-        }
-
-        private static Vector2 WorldToGui(Rect rect, Camera cam, Vector3 world)
-        {
-            // PreviewRenderUtility renders into a texture sized: rect * pixelsPerPoint.
-            // WorldToScreenPoint returns pixel coordinates in that render target.
-            Vector3 sp = cam.WorldToScreenPoint(world);
-
-            float ppp = EditorGUIUtility.pixelsPerPoint;
-            float texW = Mathf.Max(1f, rect.width * ppp);
-            float texH = Mathf.Max(1f, rect.height * ppp);
-
-            float x = rect.xMin + (sp.x / texW) * rect.width;
-            float y = rect.yMin + (1f - (sp.y / texH)) * rect.height;
-
-            return new Vector2(x, y);
-        }
-
-        private static void DrawRectOutline(Rect r, float t, Color color)
-        {
-            EditorGUI.DrawRect(new Rect(r.xMin, r.yMin, r.width, t), color);
-            EditorGUI.DrawRect(new Rect(r.xMin, r.yMax - t, r.width, t), color);
-            EditorGUI.DrawRect(new Rect(r.xMin, r.yMin, t, r.height), color);
-            EditorGUI.DrawRect(new Rect(r.xMax - t, r.yMin, t, r.height), color);
-        }
-
-        private static void DrawCentered(Rect r, string text)
-        {
-            var style = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                wordWrap = true,
-            };
-            GUI.Label(r, text, style);
         }
     }
 }

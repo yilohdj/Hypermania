@@ -1,13 +1,21 @@
 using System;
 using System.Collections.Generic;
+using MemoryPack;
 using UnityEngine;
+using Utils.SoftFloat;
 
 namespace Utils
 {
-    public sealed class Deque<T>
+    [MemoryPackable]
+    public sealed partial class Deque<T>
     {
+        [MemoryPackInclude]
         private T[] _buffer;
+
+        [MemoryPackInclude]
         private int _head;
+
+        [MemoryPackInclude]
         private int _count;
 
         public int Count => _count;
@@ -15,33 +23,22 @@ namespace Utils
 
         public Deque(int capacity = 8)
         {
-            _buffer = new T[Mathf.Max(2, NextPow2(capacity))];
+            _buffer = new T[Mathf.Max(2, Mathsf.NextPowerOfTwo(capacity))];
             _head = 0;
             _count = 0;
-        }
-
-        private static int NextPow2(int v)
-        {
-            v--;
-            v |= v >> 1;
-            v |= v >> 2;
-            v |= v >> 4;
-            v |= v >> 8;
-            v |= v >> 16;
-            return v + 1;
         }
 
         private int Mask => _buffer.Length - 1;
 
         private int Index(int i) => (_head + i) & Mask;
 
-        public T this[int index]
+        public ref T this[int index]
         {
             get
             {
                 if ((uint)index >= (uint)_count)
                     throw new ArgumentOutOfRangeException(nameof(index));
-                return _buffer[Index(index)];
+                return ref _buffer[Index(index)];
             }
         }
 
@@ -60,19 +57,19 @@ namespace Utils
             _count++;
         }
 
-        public T Front()
+        public ref T Front()
         {
             if (_count == 0)
                 throw new InvalidOperationException();
-            return _buffer[_head];
+            return ref _buffer[_head];
         }
 
-        public T Back()
+        public ref T Back()
         {
             if (_count == 0)
                 throw new InvalidOperationException();
             int idx = Index(_count - 1);
-            return _buffer[idx];
+            return ref _buffer[idx];
         }
 
         public T PopFront()
