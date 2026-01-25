@@ -18,6 +18,7 @@ namespace Game.View
         private CharacterConfig[] _characters;
 
         public ManiaViewConfig Config;
+        [SerializeField]
         private DJ_CameraControl CameraControl;
         public void Init(CharacterConfig[] characters)
         {
@@ -61,6 +62,7 @@ namespace Game.View
             {
                 interestPoints.Add((Vector2)state.Fighters[i].Position);
             }
+            CameraControl.UpdateInterestPoints(interestPoints);
         }
 
         public void DeInit()
