@@ -69,18 +69,22 @@ public class DJ_CameraControl : MonoBehaviour
     {
         InterestPoints = Points;
     }
+
     public Vector2 GetXBounds()
     {
         return XBounds;
     }
+
     public Vector2 GetYBounds()
     {
         return YBounds;
     }
+
     public void SetXBounds(Vector2 newBounds)
     {
         XBounds = newBounds;
     }
+
     public void SetYBounds(Vector2 newBounds)
     {
         YBounds = newBounds;
