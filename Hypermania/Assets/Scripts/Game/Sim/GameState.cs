@@ -89,7 +89,7 @@ namespace Game.Sim
             {
                 sfloat xPos = i - ((sfloat)characters.Length - 1) / 2;
                 FighterFacing facing = xPos > 0 ? FighterFacing.Left : FighterFacing.Right;
-                state.Fighters[i] = FighterState.Create(new SVector2(xPos, sfloat.Zero), facing);
+                state.Fighters[i] = FighterState.Create(new SVector2(xPos, sfloat.Zero), facing, characters[i]);
                 state.Manias[i] = ManiaState.Create(
                     new ManiaConfig
                     {
@@ -113,6 +113,12 @@ namespace Game.Sim
                 throw new InvalidOperationException("invalid inputs and characters to advance game state with");
             }
             Frame += 1;
+
+            // Tick the state machine, making the character idle if an animation/stun finishes
+            for (int i = 0; i < Fighters.Length; i++)
+            {
+                Fighters[i].TickStateMachine(Frame);
+            }
 
             if (GameMode == GameMode.Fighting)
             {
@@ -152,25 +158,23 @@ namespace Game.Sim
             // Apply any velocities set during movement or through knockback.
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i].UpdatePosition(Frame, config);
+                Fighters[i].UpdatePosition(config);
+            }
+
+            // If the fighter is now on the ground, apply aerial cancels
+            for (int i = 0; i < Fighters.Length; i++)
+            {
+                Fighters[i].ApplyAerialCancel(Frame, config);
             }
 
             for (int i = 0; i < Fighters.Length; i++)
             {
                 Fighters[i].FaceTowards(Fighters[i ^ 1].Position);
             }
-
-            // Tick the state machine, decreasing any forms of hitstun/blockstun and/or move timers, allowing us to
-            // become actionable next frame, etc.
+            // Apply and change the state that derives only from passive factors (movements, etc)
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i].TickStateMachine(Frame, config);
-            }
-
-            // Apply and change the state that derives only from passive factors (movements, the Mode, etc)
-            for (int i = 0; i < Fighters.Length; i++)
-            {
-                Fighters[i].ApplyPassiveState(Frame, config);
+                Fighters[i].ApplyMovementState(Frame, config);
             }
         }
 
@@ -282,17 +286,17 @@ namespace Game.Sim
         {
             if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
             {
-                Fighters[c.BoxB.Owner].ApplyHit(c.BoxA.Data);
+                Fighters[c.BoxB.Owner].ApplyHit(Frame, c.BoxA.Data);
             }
             else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
             {
-                Fighters[c.BoxA.Owner].ApplyHit(c.BoxB.Data);
+                Fighters[c.BoxA.Owner].ApplyHit(Frame, c.BoxB.Data);
             }
             else if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
             {
                 // TODO: check if moves are allowed to clank
-                Fighters[c.BoxA.Owner].ApplyClank(config);
-                Fighters[c.BoxB.Owner].ApplyClank(config);
+                Fighters[c.BoxA.Owner].ApplyClank(Frame, config);
+                Fighters[c.BoxB.Owner].ApplyClank(Frame, config);
             }
             else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
             {
