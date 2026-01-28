@@ -5,17 +5,12 @@ using UnityEngine.InputSystem;
 
 namespace Game
 {
-    // TODO: implement with actual buffer, allow customization
     public class InputBuffer
     {
-        private InputFlags[] buffer = new InputFlags[16];
-        private int frontIdx = 0;
-        private int size = 0;
+        InputFlags input = InputFlags.None;
 
         public void Saturate()
         {
-            InputFlags input = InputFlags.None;
-
             // Movement
             if (Keyboard.current.aKey.isPressed)
                 input |= InputFlags.Left;
@@ -47,32 +42,12 @@ namespace Game
                 input |= InputFlags.Mania4;
             if (Keyboard.current.lKey.isPressed)
                 input |= InputFlags.Mania6;
-
-
-            buffer[(frontIdx + size) % buffer.Length] = input;
-            if (size < buffer.Length)
-            {
-                size++;
-            } else
-            {
-                frontIdx = (frontIdx + 1) % buffer.Length;
-            }
         }
 
         public GameInput Consume()
         {
-            GameInput res;
-            if (size == 0)
-            {
-                res = new GameInput(InputFlags.None);
-            }
-            else
-            {
-                res = new GameInput(buffer[frontIdx]);
-                frontIdx = (frontIdx + 1) % buffer.Length;
-                size--;
-            }
-
+            GameInput res = new GameInput(input);
+            input = InputFlags.None;
             return res;
         }
     }

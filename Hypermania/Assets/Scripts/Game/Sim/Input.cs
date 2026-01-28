@@ -51,7 +51,7 @@ namespace Game.Sim
     // For example, if the user presses left and up, we would set the Input = Input.Left | Input.Up, which sets the bits accordingly.
     // To check if the user has pressed down, we can use userInput.HasFlag(Input.Down).
 
-    // Note: Bitwise operators work better than .HasFlag() here, we're running input every frame. 
+    // Note: Bitwise operators work better than .HasFlag() here, we're running input every frame.
     // We also use the same enums when checking for input, so bitwise operators work well here.
     [Flags]
     public enum InputFlags : int
