@@ -164,19 +164,10 @@ namespace Game.Sim
 
         public void ApplyActiveState(Frame frame, CharacterConfig characterConfig, GlobalConfig config)
         {
-            int tick = frame - StateStart;
-
-            bool canStartAttack =
-                State == CharacterState.Idle
-                || State == CharacterState.Walk
-                || State == CharacterState.Jump
-                ||
-                // allow cancelling out of attacks after a few frames:
-                (State == CharacterState.LightAttack && tick >= 10)
-                || (State == CharacterState.SuperAttack && tick >= 10);
-
-            if (!canStartAttack)
+            if (State != CharacterState.Idle && State != CharacterState.Walk && State != CharacterState.Jump)
+            {
                 return;
+            }
             if (InputH.PressedRecently(InputFlags.LightAttack, 8))
             {
                 switch (Location(config))
