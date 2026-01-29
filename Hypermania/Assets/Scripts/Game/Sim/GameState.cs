@@ -128,6 +128,10 @@ namespace Game.Sim
 
             if (GameMode == GameMode.Fighting)
             {
+                for (int i = 0; i < Fighters.Length; i++)
+                {
+                    Fighters[i].DoFrameStart();
+                }
                 // This function internally appies changes to the fighter's velocity based on movement inputs
                 for (int i = 0; i < Fighters.Length; i++)
                 {
