@@ -19,6 +19,9 @@ namespace Game.View
         [SerializeField]
         private float Margin;
 
+        private Vector2 _targetPoint;
+        private float _targetZoom;
+
         void Start()
         {
             Camera = GetComponent<Camera>();
@@ -36,12 +39,21 @@ namespace Game.View
 
         public void UpdateCamera(List<Vector2> interestPoints, float zoom, float time)
         {
-            Vector2 center = CalculateCenter(interestPoints);
-            //Interpolation to center
-            Vector2 pos = Vector2.Lerp(transform.position, center, CameraSpeed * time);
-            transform.position = new Vector3(pos.x, pos.y, transform.position.z);
-            //Interpolation to zoom
-            Camera.orthographicSize = Mathf.Lerp(Camera.orthographicSize, zoom, CameraSpeed * time);
+            _targetPoint = CalculateCenter(interestPoints);
+            _targetZoom = zoom;
+        }
+
+        public void Update()
+        {
+            float dt = Time.deltaTime;
+            float k = CameraSpeed;
+            float a = 1f - Mathf.Exp(-k * dt);
+
+            Vector3 p = transform.position;
+            Vector2 pos2 = Vector2.Lerp(new Vector2(p.x, p.y), _targetPoint, a);
+            transform.position = new Vector3(pos2.x, pos2.y, p.z);
+
+            Camera.orthographicSize = Mathf.Lerp(Camera.orthographicSize, _targetZoom, a);
         }
 
         // Recalculates the center of interestPoints
