@@ -40,6 +40,16 @@ namespace Design.Animation.Editors
 
             EditorGUILayout.Space(8);
 
+            if (m.CharacterPrefab)
+            {
+                if (GUILayout.Button("Refresh Caches"))
+                {
+                    m.VisibilityModel.RebuildVisibilityCache();
+                }
+            }
+
+            EditorGUILayout.Space(8);
+
             if (!m.HasAllInputs)
             {
                 EditorGUILayout.HelpBox("Assign Prefab, Clip, and Move Data asset.", MessageType.Info);
@@ -48,6 +58,7 @@ namespace Design.Animation.Editors
 
             if (GUILayout.Button("Initialize Data"))
                 m.BindDataToClipLength(m, tps);
+
             EditorGUILayout.Space(8);
 
             EditorGUILayout.LabelField("Controls", EditorStyles.boldLabel);
