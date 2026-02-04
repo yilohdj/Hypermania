@@ -11,13 +11,30 @@ namespace Design.Animation.Editors
         public GameObject CharacterPrefab;
         public AnimationClip Clip;
         public HitboxData Data;
-        public HitboxData RevertData;
 
         public int CurrentTick;
         public int SelectedBoxIndex = -1;
-        private bool _hasUnsavedChanges;
+        private HitboxData _lastData;
+        private int _savedValueHash;
 
-        public bool HasUnsavedChanges => _hasUnsavedChanges;
+        public bool HasUnsavedChanges
+        {
+            get
+            {
+                if (!Data)
+                    return false;
+
+                // When the user selects a different asset, treat the newly selected asset as "saved" initially.
+                if (!ReferenceEquals(Data, _lastData))
+                {
+                    _lastData = Data;
+                    _savedValueHash = Data.GetValueHash();
+                    return false;
+                }
+
+                return Data.GetValueHash() != _savedValueHash;
+            }
+        }
 
         public bool HasAllInputs => CharacterPrefab && Clip && Data;
         public int TotalTicks => Data ? Mathf.Max(1, Data.TotalTicks) : 1;
@@ -246,7 +263,8 @@ namespace Design.Animation.Editors
             EditorUtility.SetDirty(Data);
             AssetDatabase.SaveAssets();
 
-            _hasUnsavedChanges = false;
+            _lastData = Data;
+            _savedValueHash = Data.GetValueHash();
         }
 
         private void MarkDirty()
@@ -254,7 +272,6 @@ namespace Design.Animation.Editors
             if (Data)
             {
                 EditorUtility.SetDirty(Data);
-                _hasUnsavedChanges = true;
             }
         }
 

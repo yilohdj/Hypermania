@@ -15,16 +15,14 @@ namespace Design.Animation
     [Serializable]
     public struct BoxProps : IEquatable<BoxProps>
     {
+        // NOTE: ensure that any new fields added above are added to the equals and hashcode implementation!!!
         public HitboxKind Kind;
-
         public int Damage;
         public int HitstunTicks;
         public int BlockstunTicks;
         public bool StartsRhythmCombo;
         public SVector2 Knockback;
 
-        // NOTE: ensure that any new fields added above are added to the equals implementation: otherwise they will not
-        // be editable in the move builder
         public bool Equals(BoxProps other) =>
             Kind == other.Kind
             && HitstunTicks == other.HitstunTicks
@@ -35,7 +33,8 @@ namespace Design.Animation
 
         public override bool Equals(object obj) => obj is BoxProps other && Equals(other);
 
-        public override int GetHashCode() => HashCode.Combine(Kind, HitstunTicks);
+        public override int GetHashCode() =>
+            HashCode.Combine(Kind, HitstunTicks, Damage, BlockstunTicks, StartsRhythmCombo, Knockback);
 
         public static bool operator ==(BoxProps a, BoxProps b) => a.Equals(b);
 
@@ -104,6 +103,35 @@ namespace Design.Animation
                 return null;
             }
             return Frames[tick];
+        }
+
+        public int GetValueHash()
+        {
+            var hc = new HashCode();
+
+            hc.Add(Clip ? Clip.GetInstanceID() : 0);
+            hc.Add(Frames != null ? Frames.Count : 0);
+
+            if (Frames != null)
+            {
+                for (int i = 0; i < Frames.Count; i++)
+                {
+                    FrameData f = Frames[i];
+                    if (f == null || f.Boxes == null)
+                    {
+                        hc.Add(0);
+                        continue;
+                    }
+
+                    hc.Add(f.Boxes.Count);
+                    for (int j = 0; j < f.Boxes.Count; j++)
+                    {
+                        hc.Add(f.Boxes[j]);
+                    }
+                }
+            }
+
+            return hc.ToHashCode();
         }
     }
 }
