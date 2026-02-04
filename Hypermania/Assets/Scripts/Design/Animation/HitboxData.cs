@@ -74,6 +74,36 @@ namespace Design.Animation
     public class FrameData
     {
         public List<BoxData> Boxes = new List<BoxData>();
+
+        public FrameData Clone()
+        {
+            var copy = new FrameData();
+
+            if (Boxes != null)
+                copy.Boxes = new List<BoxData>(Boxes);
+            else
+                copy.Boxes = new List<BoxData>();
+
+            return copy;
+        }
+
+        public void CopyFrom(FrameData other)
+        {
+            Boxes.Clear();
+            if (other?.Boxes != null)
+                Boxes.AddRange(other.Boxes);
+        }
+
+        public override int GetHashCode()
+        {
+            var hc = new HashCode();
+            hc.Add(Boxes != null ? Boxes.Count : 0);
+            for (int j = 0; j < Boxes.Count; j++)
+            {
+                hc.Add(Boxes[j]);
+            }
+            return hc.ToHashCode();
+        }
     }
 
     [CreateAssetMenu(menuName = "Hypermania/Character Animation Hitbox Data")]
@@ -105,7 +135,7 @@ namespace Design.Animation
             return Frames[tick];
         }
 
-        public int GetValueHash()
+        public override int GetHashCode()
         {
             var hc = new HashCode();
 
@@ -116,18 +146,7 @@ namespace Design.Animation
             {
                 for (int i = 0; i < Frames.Count; i++)
                 {
-                    FrameData f = Frames[i];
-                    if (f == null || f.Boxes == null)
-                    {
-                        hc.Add(0);
-                        continue;
-                    }
-
-                    hc.Add(f.Boxes.Count);
-                    for (int j = 0; j < f.Boxes.Count; j++)
-                    {
-                        hc.Add(f.Boxes[j]);
-                    }
+                    hc.Add(Frames[i]);
                 }
             }
 

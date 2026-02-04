@@ -94,6 +94,27 @@ namespace Design.Animation.Editors
                         e.Use();
                     }
                     break;
+                case KeyCode.C:
+                    if (e.control || e.command)
+                    {
+                        if (e.shift)
+                            m.CopyCurrentFrameData();
+                        else
+                            m.CopySelectedBoxProps();
+                        e.Use();
+                    }
+                    break;
+
+                case KeyCode.V:
+                    if (e.control || e.command)
+                    {
+                        if (e.shift)
+                            m.PasteFrameDataToCurrentFrame();
+                        else
+                            m.PasteBoxPropsToSelected();
+                        e.Use();
+                    }
+                    break;
             }
         }
 

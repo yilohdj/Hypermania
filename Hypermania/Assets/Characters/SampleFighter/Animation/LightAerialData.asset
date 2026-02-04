@@ -56,9 +56,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -101,9 +101,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -146,9 +146,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -191,9 +191,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -236,9 +236,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -281,9 +281,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -326,9 +326,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -371,9 +371,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -416,9 +416,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -461,9 +461,9 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807
   - Boxes:
     - Name: Hurt
       CenterLocal:
@@ -506,6 +506,6 @@ MonoBehaviour:
         StartsRhythmCombo: 0
         Knockback:
           x:
-            rawValue: 1063070058
+            rawValue: 1064339685
           y:
-            rawValue: 3208032308
+            rawValue: 3207306807

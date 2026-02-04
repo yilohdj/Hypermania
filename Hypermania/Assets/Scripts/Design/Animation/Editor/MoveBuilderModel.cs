@@ -12,7 +12,7 @@ namespace Design.Animation.Editors
         public AnimationClip Clip;
         public HitboxData Data;
 
-        public int CurrentTick;
+        public int CurrentTick = 0;
         public int SelectedBoxIndex = -1;
         private HitboxData _lastData;
         private int _savedValueHash;
@@ -28,11 +28,11 @@ namespace Design.Animation.Editors
                 if (!ReferenceEquals(Data, _lastData))
                 {
                     _lastData = Data;
-                    _savedValueHash = Data.GetValueHash();
+                    _savedValueHash = Data.GetHashCode();
                     return false;
                 }
 
-                return Data.GetValueHash() != _savedValueHash;
+                return Data.GetHashCode() != _savedValueHash;
             }
         }
 
@@ -252,6 +252,88 @@ namespace Design.Animation.Editors
 
             MarkDirty();
         }
+
+        private bool _hasCopiedBoxProps;
+        private BoxProps _copiedBoxProps;
+        public bool HasCopiedBoxProps => _hasCopiedBoxProps;
+
+        public void CopySelectedBoxProps()
+        {
+            var frame = GetCurrentFrame();
+            if (frame == null)
+                return;
+            if (SelectedBoxIndex < 0 || SelectedBoxIndex >= frame.Boxes.Count)
+                return;
+
+            _copiedBoxProps = frame.Boxes[SelectedBoxIndex].Props;
+            _hasCopiedBoxProps = true;
+        }
+
+        public void PasteBoxPropsToSelected()
+        {
+            if (!_hasCopiedBoxProps)
+                return;
+
+            var frame = GetCurrentFrame();
+            if (frame == null)
+                return;
+            if (SelectedBoxIndex < 0 || SelectedBoxIndex >= frame.Boxes.Count)
+                return;
+
+            var cur = frame.Boxes[SelectedBoxIndex];
+            if (cur.Props == _copiedBoxProps)
+                return;
+
+            RecordUndo("Paste Box Props");
+
+            cur.Props = _copiedBoxProps;
+            frame.Boxes[SelectedBoxIndex] = cur;
+
+            MarkDirty();
+        }
+
+        private bool _hasCopiedFrame;
+        private FrameData _copiedFrame;
+
+        public bool HasCopiedFrame => _hasCopiedFrame;
+
+        public void CopyCurrentFrameData()
+        {
+            var frame = GetCurrentFrame();
+            if (frame == null)
+                return;
+
+            _copiedFrame = frame.Clone();
+            _hasCopiedFrame = true;
+        }
+
+        public void PasteFrameDataToCurrentFrame()
+        {
+            if (!_hasCopiedFrame)
+                return;
+
+            var frame = GetCurrentFrame();
+            if (frame == null)
+                return;
+
+            RecordUndo("Paste Frame Data");
+
+            frame.CopyFrom(_copiedFrame);
+
+            if (SelectedBoxIndex >= frame.Boxes.Count)
+                SelectedBoxIndex = frame.Boxes.Count - 1;
+            if (frame.Boxes.Count == 0)
+                SelectedBoxIndex = -1;
+
+            MarkDirty();
+        }
+
+        public void ResetTimelineSelection()
+        {
+            CurrentTick = 0;
+            SelectedBoxIndex = -1;
+        }
+
         #endregion
 
         #region Helpers
@@ -264,7 +346,7 @@ namespace Design.Animation.Editors
             AssetDatabase.SaveAssets();
 
             _lastData = Data;
-            _savedValueHash = Data.GetValueHash();
+            _savedValueHash = Data.GetHashCode();
         }
 
         private void MarkDirty()
