@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Design;
 using Game.Sim;
 using Game.View.Fighters;
+using Game.View.Mania;
 using UnityEngine;
 
 namespace Game.View
