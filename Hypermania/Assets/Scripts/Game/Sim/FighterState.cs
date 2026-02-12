@@ -229,6 +229,20 @@ namespace Game.Sim
                         break;
                 }
             }
+            else if (InputH.PressedRecently(InputFlags.MediumAttack, 8))
+            {
+                switch (Location(config))
+                {
+                    case FighterLocation.Grounded:
+                        {
+                            Velocity = SVector2.zero;
+                            State = CharacterState.MediumAttack;
+                            StateStart = frame;
+                            StateEnd = StateStart + characterConfig.GetHitboxData(State).TotalTicks;
+                        }
+                        break;
+                }
+            }
             else if (InputH.PressedRecently(InputFlags.HeavyAttack, 8))
             {
                 switch (Location(config))
