@@ -330,12 +330,32 @@ namespace Game.Sim
             }
         }
 
-        public void ApplyHit(Frame frame, BoxProps props, CharacterConfig config)
+        public HitOutcome ApplyHit(Frame frame, BoxProps props, CharacterConfig config)
         {
             if (ImmunityEnd > frame)
             {
-                return;
+                return new HitOutcome { Kind = HitKind.None };
             }
+
+            bool holdingBack =
+                FacingDir == FighterFacing.Left ? InputH.IsHeld(InputFlags.Right) : InputH.IsHeld(InputFlags.Left);
+            bool holdingDown = InputH.IsHeld(InputFlags.Down);
+
+            bool standBlock = props.AttackKind != AttackKind.Low;
+            bool crouchBlock = props.AttackKind != AttackKind.Overhead;
+            bool blockSuccess = holdingBack && ((holdingDown && crouchBlock) || (!holdingDown && standBlock));
+
+            if (blockSuccess)
+            {
+                // True: Crouch blocking, False: Stand blocking
+                State = holdingDown ? CharacterState.BlockCrouch : CharacterState.BlockStand;
+                StateStart = frame;
+                StateEnd = frame + props.BlockstunTicks + 1;
+                ImmunityEnd = frame + 7;
+                // TODO: check if other move is special, if so apply chip
+                return new HitOutcome { Kind = HitKind.Blocked };
+            }
+
             State = CharacterState.Hit;
             StateStart = frame;
             // Apply Hit/collision stuff is done after the player is actionable, so if the player needs to be
@@ -352,6 +372,7 @@ namespace Game.Sim
             Velocity = props.Knockback;
 
             ComboedCount++;
+            return new HitOutcome { Kind = HitKind.Hit, Props = props };
         }
 
         public void ApplyClank(Frame frame, GlobalConfig config)
