@@ -41,9 +41,6 @@ namespace Game.View.Mania
         private Frame _rollbackStart;
         // private GameView _view;
 
-        private SfxManager sfxManager; 
-        private VfxManager vfxManager;
-
         public void Init()
         {
             _activeNotes = new Dictionary<int, GameObject>();
@@ -64,48 +61,78 @@ namespace Game.View.Mania
         {
             Config.Validate();
         }
-
-        public void RollbackRender(in GameState state) {
+        public void RollbackRender(in GameState state, VfxManager vfx, SfxManager sfx)
+        {
             // gather all sfx from states in the current rollback process
             if (_rollbackStart == Frame.NullFrame)
             {
                 _rollbackStart = state.SimFrame;
             }
-            DoViewEvents(state);
+            DoViewEvents(state, vfx, sfx);
         }
-
-        private void DoViewEvents(in GameState state)
+        public void DoViewEvents(in GameState state, VfxManager vfx, SfxManager sfx)
         {
-            //TODO: figure out how to get reference to sfxmanager in gameview
-            //check how to compare if current value in ManiaEvents is equal to missevent, hitevent, etc
-            // so it would go smth like if event = miss, else if event = hit, do some sfx event
-            for (int i = 0; i < state.ManiaEvents.Count; i++)
-            {
-                
+            for (int i = 0; i < state.ManiaEvents.Count; i++) {
+                // TODO DELETE THESE
+                float x = Config.Anchors[2].localPosition.x;
+                float y = Config.Anchors[2].localPosition.y;
                 if (state.ManiaEvents[i].Kind == ManiaEventKind.Hit)
                 {
-                    sfxManager.AddDesired(
+                    
+                    sfx.AddDesired(
                         new ViewEvent<SfxEvent>
                         {
-                            Event = new SfxEvent { Kind = SfxKind.comboGood },
-                            StartFrame = state.SimFrame,
+                            Event = new SfxEvent { Kind = SfxKind.comboGood, },
+                            StartFrame = state.RealFrame,
                             Hash = i,
                         }
                     );
+
+                    vfx.AddDesired(
+                        new ViewEvent<VfxEvent>
+                        {
+                            Event = new VfxEvent { Kind = VfxKind.NoteHit, Position = new Vector2(x,y)},
+                            StartFrame = state.RealFrame,
+                            Hash = i,
+                            
+                        }
+                    );
+                    Debug.Log("Created hit vfx");
                 }
                 else if (state.ManiaEvents[i].Kind == ManiaEventKind.Missed) {
-                    sfxManager.AddDesired(
+                    if (state.ManiaEvents[i].Offset == -300) { // test value change later
+                        sfx.AddDesired(
+                        new ViewEvent<SfxEvent>
+                        {
+                            Event = new SfxEvent { Kind = SfxKind.comboOk },
+                            StartFrame = state.RealFrame,
+                            Hash = i,
+                        }
+                    );
+                    } else {
+                        sfx.AddDesired(
                         new ViewEvent<SfxEvent>
                         {
                             Event = new SfxEvent { Kind = SfxKind.comboMiss },
-                            StartFrame = state.SimFrame,
+                            StartFrame = state.RealFrame,
                             Hash = i,
                         }
                     );
+                    }
+                    vfx.AddDesired(
+                        new ViewEvent<VfxEvent>
+                        {
+                            Event = new VfxEvent { Kind = VfxKind.NoteMiss, Position = new Vector2(x,y)},
+                            StartFrame = state.RealFrame,
+                            Hash = i,
+                        }
+                    );
+                    Debug.Log("Created miss vfx");
                 }
             }
-            // state.ManiaEvents.Clear(); 
+            
         }
+            
 
         public void Render(Frame frame, in ManiaState state)
         {

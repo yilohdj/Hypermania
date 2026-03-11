@@ -87,6 +87,7 @@ namespace Game.Sim
                 RoundEnd = new Frame(options.Global.RoundTimeTicks),
                 Fighters = new FighterState[options.Players.Length],
                 Manias = new ManiaState[options.Players.Length],
+                ManiaEvents = new List<ManiaEvent>(),
                 HitstopFramesRemaining = 0,
                 HypeMeter = (sfloat)0f,
                 GameMode = GameMode.Countdown,
@@ -121,6 +122,7 @@ namespace Game.Sim
             HypeMeter = (sfloat)0.0f;
             RoundStart = SimFrame;
             GameMode = GameMode.Countdown;
+            ManiaEvents = new List<ManiaEvent>(); 
         }
 
         private void DoCountdown(GameOptions options, Span<GameInput> outInputs)
@@ -138,6 +140,7 @@ namespace Game.Sim
 
         public void Advance(GameOptions options, (GameInput input, InputStatus status)[] inputs)
         {
+            ManiaEvents.Clear(); 
             RealFrame += 1;
             if (inputs.Length != options.Players.Length || options.Players.Length != Fighters.Length)
             {
@@ -291,7 +294,7 @@ namespace Game.Sim
         {
             for (int i = 0; i < Manias.Length; i++)
             {
-                ManiaEvents = new List<ManiaEvent>(); 
+                
                 Manias[i].Tick(RealFrame, inputs[i].input, ManiaEvents);
 
                 foreach (ManiaEvent ev in ManiaEvents)

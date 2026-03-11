@@ -160,8 +160,9 @@ namespace Game.View
         {
             // TODO: refactor me, im thinking some listener pattern
             for (int i = 0; i < _options.Players.Length; i++)
-            {
+            { 
                 _fighters[i].RollbackRender(state.SimFrame, state.Fighters[i], _params.VfxManager, _params.SfxManager);
+                _playerParams[i].ManiaView.RollbackRender(state, _params.VfxManager, _params.SfxManager);
                 if (
                     (
                         state.Fighters[i].State == CharacterState.Hit
