@@ -117,6 +117,11 @@ namespace Game.Sim
             {
                 return;
             }
+            if (FightersDead())
+            {
+                GameMode = GameMode.End;
+                return;
+            }
             for (int i = 0; i < Fighters.Length; i++)
             {
                 Fighters[i].Health = options.Players[i].Character.Health;
@@ -130,12 +135,12 @@ namespace Game.Sim
             RoundEndStart = Frame.NullFrame;
             HypeMeter = (sfloat)0.0f;
             RoundStart = SimFrame;
+            SpeedRatio = 1;
             GameMode = GameMode.Countdown;
         }
 
         private void DoCountdown(GameOptions options, Span<GameInput> outInputs)
         {
-            SpeedRatio = 1;
             for (int i = 0; i < Fighters.Length; i++)
             {
                 outInputs[i] = GameInput.None;
@@ -251,11 +256,6 @@ namespace Game.Sim
                     if (Fighters[i].Health <= 0)
                     {
                         Fighters[i].Lives--;
-                        if (Fighters[i].Lives <= 0)
-                        {
-                            GameMode = GameMode.End;
-                            return;
-                        }
 
                         // Decide what victory indicator to give.
                         if (Fighters[1 - i].Health == options.Players[1 - i].Character.Health)
@@ -266,10 +266,10 @@ namespace Game.Sim
                         {
                             Fighters[1 - i].Victories[Fighters[1 - i].NumVictories] = VictoryKind.Normal;
                         }
-
                         Fighters[1 - i].NumVictories++;
-                        Fighters[i].SetState(CharacterState.Death, SimFrame, Frame.Infinity);
+
                         GameMode = GameMode.RoundEnd;
+                        Fighters[i].SetState(CharacterState.Death, SimFrame, Frame.Infinity);
                         RoundEndStart = RealFrame;
                         // Ensure that if the player died to a mania attack it ends immediately
                         for (int j = 0; j < Manias.Length; j++)
