@@ -11,7 +11,7 @@ using Utils;
 
 namespace Game.Runners
 {
-    public class MultiplayerRunner : GameRunner
+    public class OnlineRunner : GameRunner
     {
         private P2PSession<GameState, GameInput, SteamNetworkingIdentity> _session;
 
@@ -56,6 +56,11 @@ namespace Game.Runners
             {
                 throw new InvalidOperationException("Players not found in multiplayer runner");
             }
+
+            if (_options.LocalPlayers.Length != 1)
+            {
+                throw new InvalidOperationException("Multiplayer runner only supports one local player");
+            }
         }
 
         public override void DeInit()
@@ -73,8 +78,8 @@ namespace Game.Runners
                 return;
             }
 
-            _inputBuffer.Clear();
-            _inputBuffer.Saturate();
+            _inputBuffers[0].Clear();
+            _inputBuffers[0].Saturate();
 
             _session.PollRemoteClients();
 
@@ -119,7 +124,7 @@ namespace Game.Runners
                 return;
             }
 
-            _session.AddLocalInput(_myHandle, _inputBuffer.Poll());
+            _session.AddLocalInput(_myHandle, _inputBuffers[0].Poll());
 
             List<RollbackRequest<GameState, GameInput>> requests = _session.AdvanceFrame();
             foreach (RollbackRequest<GameState, GameInput> request in requests)
