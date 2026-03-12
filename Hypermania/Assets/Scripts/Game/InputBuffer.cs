@@ -46,38 +46,34 @@ namespace Game
                 {
                     continue; // Skips the None InputFlag (Does Not Have a Key Press)
                 }
-                if (_inputDevice is Keyboard)
+                if (_inputDevice is Keyboard keyboard)
                 {
                     if (
                         (
                             _controlScheme[flag].GetPrimaryKey() != Key.None
-                            && ((Keyboard)_inputDevice)[_controlScheme[flag].GetPrimaryKey()].isPressed
+                            && keyboard[_controlScheme[flag].GetPrimaryKey()].isPressed
                         )
                         || (
                             _controlScheme[flag].GetAltKey() != Key.None
-                            && ((Keyboard)_inputDevice)[_controlScheme[flag].GetAltKey()].isPressed
+                            && keyboard[_controlScheme[flag].GetAltKey()].isPressed
                         )
                     )
                     {
                         _input |= flag;
                     }
                 }
-                else
+                else if (_inputDevice is Gamepad gamePad)
                 {
                     // Checks if either the primary or alt button set in config is pressed
                     // Ignores keys set to none
                     if (
                         (
                             _controlScheme[flag].GetPrimaryGamepadButton() != GamepadButtons.None
-                            && ((Gamepad)_inputDevice)[
-                                (GamepadButton)_controlScheme[flag].GetPrimaryGamepadButton()
-                            ].isPressed
+                            && gamePad[(GamepadButton)_controlScheme[flag].GetPrimaryGamepadButton()].isPressed
                         )
                         || (
                             _controlScheme[flag].GetAltGamepadButton() != GamepadButtons.None
-                            && ((Gamepad)_inputDevice)[
-                                (GamepadButton)_controlScheme[flag].GetAltGamepadButton()
-                            ].isPressed
+                            && gamePad[(GamepadButton)_controlScheme[flag].GetAltGamepadButton()].isPressed
                         )
                     )
                     {
