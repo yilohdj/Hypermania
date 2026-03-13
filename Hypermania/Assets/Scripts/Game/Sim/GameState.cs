@@ -7,6 +7,7 @@ using Design.Configs;
 using Game.View.Overlay;
 using MemoryPack;
 using Netcode.Rollback;
+using UnityEngine.InputSystem;
 using Utils;
 using Utils.SoftFloat;
 
@@ -26,6 +27,7 @@ namespace Game.Sim
         public bool HealOnActionable;
         public CharacterConfig Character;
         public int SkinIndex;
+        public InputDevice InputDevice;
     }
 
     [Serializable]

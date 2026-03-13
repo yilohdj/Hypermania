@@ -16,8 +16,9 @@ namespace Game.Runners
         [SerializeField]
         protected GameView _view;
 
+        //TODO: ADDRESS ME (Set to public for device management)
         [SerializeField]
-        protected GameOptions _options;
+        public GameOptions _options;
 
         [SerializeField]
         protected bool _drawHitboxes;
