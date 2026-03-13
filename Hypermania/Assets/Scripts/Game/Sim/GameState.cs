@@ -268,6 +268,11 @@ namespace Game.Sim
             {
                 Fighters[i].TickStateMachine(SimFrame, options);
             }
+            
+            for (int i = 0; i < Fighters.Length; i++)
+            {
+                Fighters[i].FaceTowards(Fighters[i ^ 1].Position);
+            }
 
             // This function internally appies changes to the fighter's velocity based on movement inputs
             for (int i = 0; i < Fighters.Length; i++)
@@ -352,10 +357,6 @@ namespace Game.Sim
                 Fighters[i].ApplyAerialCancel(SimFrame, options, options.Players[i].Character);
             }
 
-            for (int i = 0; i < Fighters.Length; i++)
-            {
-                Fighters[i].FaceTowards(Fighters[i ^ 1].Position);
-            }
         }
 
         public bool FightersDead()
