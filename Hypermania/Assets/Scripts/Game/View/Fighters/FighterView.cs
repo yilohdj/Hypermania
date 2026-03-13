@@ -34,6 +34,7 @@ namespace Game.View.Fighters
             {
                 throw new InvalidOperationException("Skin index out of range");
             }
+
             _characterConfig = characterConfig;
             _oldController = _animator.runtimeAnimatorController;
             _animator.runtimeAnimatorController = characterConfig.AnimationController;
@@ -67,16 +68,13 @@ namespace Game.View.Fighters
         }
 
         public virtual void RollbackRender(
-            Frame simFrame,
+            Frame realFrame,
             in FighterState state,
             VfxManager vfxManager,
             SfxManager sfxManager
         )
         {
-            if (
-                state.State == CharacterState.BlockCrouch
-                || state.State == CharacterState.BlockStand && simFrame == state.StateStart
-            )
+            if (state.BlockedLastRealFrame)
             {
                 vfxManager.AddDesired(
                     new ViewEvent<VfxEvent>
@@ -84,36 +82,28 @@ namespace Game.View.Fighters
                         Event = new VfxEvent
                         {
                             Kind = VfxKind.Block,
-                            Direction = (Vector2)state.HitProps.Knockback,
-                            Position = (Vector2)state.HitLocation,
+                            Direction = (Vector2)state.HitProps.Value.Knockback,
+                            Position = (Vector2)state.HitLocation.Value,
                         },
-                        StartFrame = simFrame,
-                        Hash = 0, // can't be more than one block per character on a frame?
+                        StartFrame = realFrame,
+                        Hash = 0,
                     }
                 );
             }
-            if (
-                (
-                    state.State == CharacterState.Hit
-                    || state.State == CharacterState.Knockdown
-                    || state.State == CharacterState.Death
-                )
-                && simFrame == state.StateStart
-            )
+
+            if (state.HitLastRealFrame)
             {
                 vfxManager.AddDesired(
                     new ViewEvent<VfxEvent>()
                     {
                         Event = new VfxEvent { Kind = VfxKind.SmallHit, Position = (Vector2)state.HitLocation },
-                        StartFrame = simFrame,
+                        StartFrame = realFrame,
                         Hash = 0,
                     }
                 );
             }
-            if (
-                (state.State == CharacterState.BackDash || state.State == CharacterState.ForwardDash)
-                && simFrame == state.StateStart
-            )
+
+            if (state.DashedLastRealFrame)
             {
                 Vector2 dir = (Vector2)(
                     state.State == CharacterState.ForwardDash ? state.ForwardVector : state.BackwardVector
@@ -128,7 +118,7 @@ namespace Game.View.Fighters
                             Direction = dir,
                             Position = (Vector2)state.Position + dir * _dustEmitterLocation.localPosition.x,
                         },
-                        StartFrame = simFrame,
+                        StartFrame = realFrame,
                         Hash = 0,
                     }
                 );
