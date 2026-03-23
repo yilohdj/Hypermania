@@ -4,6 +4,7 @@ using Design.Animation;
 using Design.Configs;
 using Game.View.Overlay;
 using MemoryPack;
+using UnityEngine;
 using Utils;
 using Utils.SoftFloat;
 
@@ -398,7 +399,7 @@ namespace Game.Sim
                 { (FighterAttackLocation.Aerial, InputFlags.SpecialAttack), CharacterState.SpecialAerial },
             };
 
-        public void ApplyActiveState(Frame frame, Frame realFrame, GameOptions options, CharacterConfig config)
+        public void ApplyActiveState(Frame simFrame, Frame realFrame, GameOptions options, CharacterConfig config)
         {
             if (State == CharacterState.Hit)
             {
@@ -407,15 +408,15 @@ namespace Game.Sim
                     Burst = 0;
                     SetState(
                         CharacterState.Burst,
-                        frame,
-                        frame + config.GetHitboxData(CharacterState.Burst).TotalTicks
+                        simFrame,
+                        simFrame + config.GetHitboxData(CharacterState.Burst).TotalTicks
                     );
                     // TODO: apply knockback to other player (this should be a hitbox on a burst animation with large kb)
                 }
                 return;
             }
 
-            FrameData frameData = config.GetFrameData(State, frame - StateStart);
+            FrameData frameData = config.GetFrameData(State, simFrame - StateStart);
             bool isOnBeat = options.Global.Audio.BeatWithinWindow(
                 realFrame,
                 AudioConfig.BeatSubdivision.QuarterNote,
@@ -425,23 +426,19 @@ namespace Game.Sim
 
             bool dashCancelEligible =
                 (
-                    (frame + options.Global.ForwardDashCancelAfterTicks >= StateEnd)
+                    (simFrame + options.Global.ForwardDashCancelAfterTicks >= StateEnd)
                     && State == CharacterState.ForwardDash
                 )
-                || ((frame + options.Global.BackDashCancelAfterTicks >= StateEnd) && State == CharacterState.BackDash);
+                || ((simFrame + options.Global.BackDashCancelAfterTicks >= StateEnd) && State == CharacterState.BackDash);
 
             if (!Actionable && !dashCancelEligible && !beatCancelEligible)
             {
                 return;
             }
-
-            Frame startFrame = frame;
+            
             int bufferWindow = options.Global.Input.InputBufferWindow;
             if (!Actionable && beatCancelEligible)
             {
-                int frameDiff =
-                    options.Global.Audio.ClosestBeat(frame, AudioConfig.BeatSubdivision.QuarterNote) - realFrame;
-                startFrame += frameDiff;
                 // beat cancel inputs must be on the beat
                 bufferWindow = 2;
             }
@@ -457,6 +454,16 @@ namespace Game.Sim
                     {
                         Velocity = SVector2.zero;
                     }
+
+                    Frame startFrame = simFrame;
+                    int[] frames = new int[3];
+                    if (!Actionable && beatCancelEligible && config.GetHitboxData(state).IsValidAttack(frames))
+                    {
+                        int frameDiff =
+                            options.Global.Audio.ClosestBeat(realFrame, AudioConfig.BeatSubdivision.QuarterNote) - realFrame;
+                        startFrame += frameDiff - frames[0] + options.Global.Input.BeatCancelWindow;
+                        Debug.Log("Rhythm cancel!");
+                    }
                     SetState(state, startFrame, startFrame + config.GetHitboxData(state).TotalTicks, true);
                     return;
                 }
@@ -464,7 +471,7 @@ namespace Game.Sim
 
             if (dashCancelEligible && InputH.IsHeld(ForwardInput) && State == CharacterState.ForwardDash)
             {
-                SetState(CharacterState.Running, frame, Frame.Infinity);
+                SetState(CharacterState.Running, simFrame, Frame.Infinity);
             }
         }
 
