@@ -231,6 +231,7 @@ namespace Game.Sim
             }
 
             PartialSimFrameCount = 0;
+            (bool shouldRhythmCancel, int beatOffset) rhythmCancel = default;
             Span<GameInput> remapInputs = stackalloc GameInput[Fighters.Length];
             switch (GameMode)
             {
@@ -248,7 +249,7 @@ namespace Game.Sim
 
                     break;
                 case GameMode.Mania:
-                    DoManiaStep(inputs, remapInputs);
+                    rhythmCancel = DoManiaStep(inputs, remapInputs);
                     break;
                 case GameMode.ManiaStart:
                     DoManiaStart(options, remapInputs);
@@ -289,13 +290,20 @@ namespace Game.Sim
             // This function internally appies changes to the fighter's velocity based on movement inputs
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i].ApplyMovementState(SimFrame, options);
+                Fighters[i].ApplyMovementState(SimFrame, options, rhythmCancel.shouldRhythmCancel);
             }
 
             // If a player applies inputs to start a state at the start of the frame, we should apply those immediately
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i].ApplyActiveState(SimFrame, RealFrame, options, options.Players[i].Character);
+                Fighters[i]
+                    .ApplyActiveState(
+                        SimFrame,
+                        options,
+                        options.Players[i].Character,
+                        rhythmCancel.shouldRhythmCancel,
+                        rhythmCancel.beatOffset
+                    );
             }
 
             DoCollisionStep(options);
@@ -383,8 +391,10 @@ namespace Game.Sim
             return false;
         }
 
-        private void DoManiaStep((GameInput input, InputStatus status)[] inputs, Span<GameInput> outInputs)
+        private (bool, int) DoManiaStep((GameInput input, InputStatus status)[] inputs, Span<GameInput> outInputs)
         {
+            (bool, int) rhythmCancel = (false, 0);
+            
             for (int i = 0; i < Manias.Length; i++)
             {
                 Manias[i].Tick(RealFrame, inputs[i].input);
@@ -398,6 +408,7 @@ namespace Game.Sim
                             break;
                         case ManiaEventKind.Hit:
                             outInputs[i].Flags |= ev.Note.HitInput;
+                            rhythmCancel = (true, ev.Offset);
                             break;
                         case ManiaEventKind.Missed:
                             GameMode = GameMode.Fighting;
@@ -406,7 +417,21 @@ namespace Game.Sim
                     }
                 }
             }
+
+            return rhythmCancel;
         }
+
+        private static readonly (InputFlags, AudioConfig.BeatSubdivision)[] COMBO =
+        {
+            (InputFlags.MediumAttack, AudioConfig.BeatSubdivision.QuarterNote),
+            (InputFlags.MediumAttack | InputFlags.Down, AudioConfig.BeatSubdivision.QuarterNote),
+            (InputFlags.MediumAttack, AudioConfig.BeatSubdivision.QuarterNote),
+            (InputFlags.HeavyAttack | InputFlags.Down, AudioConfig.BeatSubdivision.QuarterNote),
+            (InputFlags.Up | InputFlags.Right, AudioConfig.BeatSubdivision.EighthNote),
+            (InputFlags.LightAttack, AudioConfig.BeatSubdivision.EighthNote),
+            (InputFlags.MediumAttack, AudioConfig.BeatSubdivision.QuarterNote),
+            (InputFlags.HeavyAttack, AudioConfig.BeatSubdivision.QuarterNote),
+        };
 
         private void DoCollisionStep(GameOptions options)
         {
@@ -489,47 +514,47 @@ namespace Game.Sim
                     }
 
                     //to start a rhythm combo, we must sure that the move was not traded
-                    // if (
-                    //     attackerBox.Data.StartsRhythmCombo
-                    //     && !PhysicsCtx.HurtHitCollisions.ContainsKey((owners.Item2, owners.Item1))
-                    //     && GameMode == GameMode.Fighting
-                    //     && outcome.Kind == HitKind.Hit
-                    // )
-                    // {
-                    //     // set hitstop to the next beat
-                    //     Frame nextBeat = RealFrame;
-                    //     while (nextBeat - RealFrame < options.Global.ManiaSlowTicks)
-                    //     {
-                    //         nextBeat = options.Global.Audio.NextBeat(
-                    //             nextBeat + 1,
-                    //             AudioConfig.BeatSubdivision.QuarterNote
-                    //         );
-                    //     }
-                    //
-                    //     HitstopFramesRemaining = nextBeat - (RealFrame + options.Global.ManiaSlowTicks);
-                    //     for (int i = 0; i < 16; i++)
-                    //     {
-                    //         Manias[owners.Item1]
-                    //             .QueueNote(
-                    //                 i % 4,
-                    //                 new ManiaNote
-                    //                 {
-                    //                     Length = 0,
-                    //                     Tick = nextBeat,
-                    //                     HitInput = InputFlags.MediumAttack,
-                    //                 }
-                    //             );
-                    //         nextBeat = options.Global.Audio.NextBeat(
-                    //             nextBeat + 1,
-                    //             AudioConfig.BeatSubdivision.QuarterNote
-                    //         );
-                    //     }
-                    //
-                    //     Manias[owners.Item1].Enable(nextBeat);
-                    //     GameMode = GameMode.ManiaStart;
-                    //     ModeStart = RealFrame;
-                    //     // TODO: show mania screen only after the maximum rollback frames to ensure no visual artifacting
-                    // }
+                    if (
+                        attackerBox.Data.StartsRhythmCombo
+                        && !PhysicsCtx.HurtHitCollisions.ContainsKey((owners.Item2, owners.Item1))
+                        && GameMode == GameMode.Fighting
+                        && outcome.Kind == HitKind.Hit
+                    )
+                    {
+                        // set hitstop to the next beat
+                        Frame nextBeat = RealFrame;
+                        while (nextBeat - RealFrame < options.Global.ManiaSlowTicks)
+                        {
+                            nextBeat = options.Global.Audio.NextBeat(
+                                nextBeat + 1,
+                                AudioConfig.BeatSubdivision.QuarterNote
+                            );
+                        }
+
+                        HitstopFramesRemaining = nextBeat - (RealFrame + options.Global.ManiaSlowTicks);
+                        for (int i = 0; i < COMBO.Length; i++)
+                        {
+                            Manias[owners.Item1]
+                                .QueueNote(
+                                    i % 4,
+                                    new ManiaNote
+                                    {
+                                        Length = 0,
+                                        Tick = nextBeat,
+                                        HitInput = COMBO[i].Item1,
+                                    }
+                                );
+                            nextBeat = options.Global.Audio.NextBeat(
+                                nextBeat + 1,
+                                COMBO[i].Item2
+                            );
+                        }
+
+                        Manias[owners.Item1].Enable(nextBeat);
+                        GameMode = GameMode.ManiaStart;
+                        ModeStart = RealFrame;
+                        // TODO: show mania screen only after the maximum rollback frames to ensure no visual artifacting
+                    }
                 }
             }
             else if (clank.HasValue)

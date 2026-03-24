@@ -26,6 +26,7 @@ namespace Design.Animation.ComboFinder.Editor
 
         private CharacterConfig _characterConfig;
         private AudioConfig _audioConfig;
+        private GlobalConfig _globalConfig;
         private Vector2 _leftScroll;
         private Vector2 _mainScroll;
 
@@ -86,6 +87,13 @@ namespace Design.Animation.ComboFinder.Editor
                 );
             _audioConfig = (AudioConfig)
                 EditorGUILayout.ObjectField(new GUIContent("Audio Config"), _audioConfig, typeof(AudioConfig), false);
+            _globalConfig = (GlobalConfig)
+                EditorGUILayout.ObjectField(
+                    new GUIContent("Global Config"),
+                    _globalConfig,
+                    typeof(GlobalConfig),
+                    false
+                );
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -127,10 +135,10 @@ namespace Design.Animation.ComboFinder.Editor
             EditorGUILayout.LabelField("Moves", EditorStyles.boldLabel);
             EditorGUILayout.Space();
 
-            if (_characterConfig == null || _audioConfig == null)
+            if (_characterConfig == null || _audioConfig == null || _globalConfig == null)
             {
                 EditorGUILayout.HelpBox(
-                    "Assign a CharacterConfig and AudioConfig in the left panel.",
+                    "Assign a CharacterConfig and AudioConfig and GlobalConfig in the left panel.",
                     MessageType.Warning
                 );
             }
@@ -248,7 +256,7 @@ namespace Design.Animation.ComboFinder.Editor
                 + 3;
 
             simFighters[0].SetState(move.State, firstFrame, firstFrame + move.Data.TotalTicks, true);
-            for (int i = 0; i < move.Data.TotalTicks; i++, col++)
+            for (int i = 0; i < 60; i++, col++)
             {
                 for (int j = 0; j < 2; j++)
                 {
@@ -258,9 +266,16 @@ namespace Design.Animation.ComboFinder.Editor
                     }
                 }
 
+                bool notBothIdle =
+                    simFighters[0].State != CharacterState.Idle || simFighters[1].State != CharacterState.Idle;
+                if (!notBothIdle)
+                {
+                    break;
+                }
+
                 FrameData prev = move.Data.GetFrame(i - 1);
                 FrameData cur = move.Data.GetFrame(i);
-                if (prev != null && !prev.HasHitbox(out _) && cur.HasHitbox(out var boxProps))
+                if (prev != null && cur != null && !prev.HasHitbox(out _) && cur.HasHitbox(out var boxProps))
                 {
                     HitOutcome outcome = simFighters[1]
                         .ApplyHit(firstFrame + i, firstFrame, _characterConfig, boxProps, SVector2.zero, 1);
@@ -281,7 +296,13 @@ namespace Design.Animation.ComboFinder.Editor
                         DrawGridCell(cellRect, FrameType.Hitstop, j, col);
                     }
 
-                    if (_audioConfig.BeatWithinWindow(firstFrame + col, AudioConfig.BeatSubdivision.QuarterNote, 3))
+                    if (
+                        _audioConfig.BeatWithinWindow(
+                            firstFrame + col,
+                            AudioConfig.BeatSubdivision.QuarterNote,
+                            _globalConfig.Input.BeatCancelWindow
+                        )
+                    )
                     {
                         Rect beatRect = new Rect(
                             rect.x + col * CellWidth,
@@ -309,7 +330,13 @@ namespace Design.Animation.ComboFinder.Editor
                         col
                     );
                 }
-                if (_audioConfig.BeatWithinWindow(firstFrame + col, AudioConfig.BeatSubdivision.QuarterNote, 3))
+                if (
+                    _audioConfig.BeatWithinWindow(
+                        firstFrame + col,
+                        AudioConfig.BeatSubdivision.QuarterNote,
+                        _globalConfig.Input.BeatCancelWindow
+                    )
+                )
                 {
                     Rect beatRect = new Rect(rect.x + col * CellWidth, rect.y + 2 * CellHeight, CellWidth, CellHeight);
                     DrawGridCell(beatRect, FrameType.Active, 2, col);
@@ -334,12 +361,12 @@ namespace Design.Animation.ComboFinder.Editor
         {
             return frameType switch
             {
-                FrameType.Startup => new Color(1f, 0.95f, 0.55f),
+                FrameType.Startup => new Color(0.6f, 0.7f, 1f),
                 FrameType.Active => new Color(1f, 0.5f, 0.5f),
                 FrameType.Recovery => new Color(0.75f, 1f, 0.75f),
-                FrameType.Hitstun => new Color(0.8f, 0.8f, 1f),
-                FrameType.Blockstun => new Color(0.85f, 0.85f, 0.95f),
-                FrameType.Hitstop => new Color(0.95f, 0.8f, 1f),
+                FrameType.Hitstun => new Color(0.9f, 0.6f, 0.5f),
+                FrameType.Blockstun => new Color(0.85f, 0.85f, 0.6f),
+                FrameType.Hitstop => new Color(0.4f, 0.4f, 0.4f),
                 _ => Color.white,
             };
         }

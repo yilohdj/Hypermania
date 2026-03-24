@@ -240,7 +240,7 @@ namespace Design.Animation
             return false;
         }
 
-        private static readonly FrameType[] ATTACK_FRAME_TYPE_ORDER =
+        public static readonly FrameType[] ATTACK_FRAME_TYPE_ORDER =
         {
             FrameType.Startup,
             FrameType.Active,
@@ -252,6 +252,11 @@ namespace Design.Animation
             if (!HasHitbox())
             {
                 return false;
+            }
+
+            for (int i = 0; i < ATTACK_FRAME_TYPE_ORDER.Length; i++)
+            {
+                frameCount[i] = 0;
             }
 
             int frameTypeIndex = 0;

@@ -15,7 +15,9 @@ namespace Scenes.Session
         public static GameOptions Options;
         public static Dictionary<InputDevice, DeviceAssignment> RegisteredDevices { get; private set; } = new();
 
-        [SerializeField] private GameConfig _config;
+        [SerializeField]
+        private GameConfig _config;
+
         [SerializeField]
         private GameOptions _options;
 

@@ -253,16 +253,16 @@ namespace Game.Sim
             }
         }
 
-        public void ApplyMovementState(Frame frame, GameOptions options)
+        public void ApplyMovementState(Frame frame, GameOptions options, bool isRhythmCancel)
         {
-            if (!Actionable)
+            if (!Actionable && !isRhythmCancel)
             {
                 return;
             }
             sfloat runMult = State == CharacterState.Running ? options.Global.RunningSpeedMultiplier : (sfloat)1f;
             CharacterConfig config = options.Players[Index].Character;
 
-            if (GroundedActionable)
+            if (GroundedActionable || isRhythmCancel)
             {
                 if (InputH.IsHeld(InputFlags.Up))
                 {
@@ -275,6 +275,7 @@ namespace Game.Sim
                     {
                         StoredJumpVelocity.y = config.JumpVelocity;
                     }
+
                     if (InputH.IsHeld(ForwardInput))
                     {
                         StoredJumpVelocity.x = ForwardVector.x * config.ForwardSpeed * runMult;
@@ -287,6 +288,7 @@ namespace Game.Sim
                     {
                         StoredJumpVelocity.x = 0;
                     }
+
                     Velocity = SVector2.zero;
                     SetState(
                         CharacterState.PreJump,
@@ -296,15 +298,15 @@ namespace Game.Sim
                     return;
                 }
 
-                if (InputH.IsHeld(InputFlags.Down))
+                if (InputH.IsHeld(InputFlags.Down) && !isRhythmCancel)
                 {
                     // Crouch
                     Velocity.x = 0;
                     SetState(CharacterState.Crouch, frame, Frame.Infinity);
                     return;
                 }
-
-                if (InputH.IsHeld(ForwardInput))
+                
+                if (InputH.IsHeld(ForwardInput) && !isRhythmCancel)
                 {
                     Velocity.x = ForwardVector.x * config.ForwardSpeed * runMult;
 
@@ -312,13 +314,13 @@ namespace Game.Sim
                         State == CharacterState.Running ? CharacterState.Running : CharacterState.ForwardWalk;
                     SetState(nxtState, frame, Frame.Infinity);
                 }
-                else if (InputH.IsHeld(BackwardInput))
+                else if (InputH.IsHeld(BackwardInput) && !isRhythmCancel)
                 {
                     Velocity.x = BackwardVector.x * config.BackSpeed;
 
                     SetState(CharacterState.BackWalk, frame, Frame.Infinity);
                 }
-                else
+                else if (!isRhythmCancel)
                 {
                     Velocity.x = 0;
 
@@ -399,7 +401,13 @@ namespace Game.Sim
                 { (FighterAttackLocation.Aerial, InputFlags.SpecialAttack), CharacterState.SpecialAerial },
             };
 
-        public void ApplyActiveState(Frame simFrame, Frame realFrame, GameOptions options, CharacterConfig config)
+        public void ApplyActiveState(
+            Frame simFrame,
+            GameOptions options,
+            CharacterConfig config,
+            bool isRhythmCancel,
+            int beatOffset
+        )
         {
             if (State == CharacterState.Hit)
             {
@@ -416,33 +424,28 @@ namespace Game.Sim
                 return;
             }
 
-            FrameData frameData = config.GetFrameData(State, simFrame - StateStart);
-            bool isOnBeat = options.Global.Audio.BeatWithinWindow(
-                realFrame,
-                AudioConfig.BeatSubdivision.QuarterNote,
-                windowFrames: options.Global.Input.BeatCancelWindow
-            );
-            bool beatCancelEligible = frameData.FrameType == FrameType.Recovery && isOnBeat;
-
             bool dashCancelEligible =
                 (
                     (simFrame + options.Global.ForwardDashCancelAfterTicks >= StateEnd)
                     && State == CharacterState.ForwardDash
                 )
-                || ((simFrame + options.Global.BackDashCancelAfterTicks >= StateEnd) && State == CharacterState.BackDash);
+                || (
+                    (simFrame + options.Global.BackDashCancelAfterTicks >= StateEnd) && State == CharacterState.BackDash
+                );
 
-            if (!Actionable && !dashCancelEligible && !beatCancelEligible)
+            if (!Actionable && !dashCancelEligible && !isRhythmCancel)
             {
                 return;
             }
-            
+
             int bufferWindow = options.Global.Input.InputBufferWindow;
-            if (!Actionable && beatCancelEligible)
+            if (isRhythmCancel)
             {
                 // beat cancel inputs must be on the beat
                 bufferWindow = 2;
             }
 
+            int[] frames = new int[HitboxData.ATTACK_FRAME_TYPE_ORDER.Length];
             foreach (((var loc, var input), var state) in _attackDictionary)
             {
                 if (InputH.PressedRecently(input, bufferWindow) && AttackLocation == loc)
@@ -456,13 +459,10 @@ namespace Game.Sim
                     }
 
                     Frame startFrame = simFrame;
-                    int[] frames = new int[3];
-                    if (!Actionable && beatCancelEligible && config.GetHitboxData(state).IsValidAttack(frames))
+                    if (isRhythmCancel && config.GetHitboxData(state).IsValidAttack(frames))
                     {
-                        int frameDiff =
-                            options.Global.Audio.ClosestBeat(realFrame, AudioConfig.BeatSubdivision.QuarterNote) - realFrame;
-                        startFrame += frameDiff - frames[0] + options.Global.Input.BeatCancelWindow;
-                        Debug.Log("Rhythm cancel!");
+                        // a negative beat offset means the input was early, which means we should start it later, so we negate beatoffset
+                        startFrame += -beatOffset - frames[0] + options.Global.Input.BeatCancelWindow;
                     }
                     SetState(state, startFrame, startFrame + config.GetHitboxData(state).TotalTicks, true);
                     return;
@@ -616,7 +616,8 @@ namespace Game.Sim
                 SetState(
                     holdingDown ? CharacterState.BlockCrouch : CharacterState.BlockStand,
                     frame,
-                    frame + props.BlockstunTicks
+                    frame + props.BlockstunTicks,
+                    true
                 );
 
                 // TODO: check if other move is special, if so apply chip
@@ -626,10 +627,10 @@ namespace Game.Sim
             switch (props.KnockdownKind)
             {
                 case KnockdownKind.None:
-                    SetState(CharacterState.Hit, frame, frame + props.HitstunTicks);
+                    SetState(CharacterState.Hit, frame, frame + props.HitstunTicks, true);
                     break;
                 case KnockdownKind.Light:
-                    SetState(CharacterState.Knockdown, frame, Frame.Infinity);
+                    SetState(CharacterState.Knockdown, frame, Frame.Infinity, true);
                     break;
             }
 
