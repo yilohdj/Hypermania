@@ -26,6 +26,7 @@ namespace Game.Sim
     public class PlayerOptions
     {
         public bool HealOnActionable;
+        public bool Immortal;
         public CharacterConfig Character;
         public int SkinIndex;
     }
@@ -84,6 +85,7 @@ namespace Game.Sim
         public sfloat HypeMeter;
         public GameMode GameMode;
         public int HitstopFramesRemaining;
+        public RhythmComboManager ComboManager;
 
         public sfloat SpeedRatio;
         public Frame ModeStart;
@@ -290,7 +292,8 @@ namespace Game.Sim
             // This function internally appies changes to the fighter's velocity based on movement inputs
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i].ApplyMovementState(SimFrame, options, rhythmCancel.shouldRhythmCancel);
+                Fighters[i]
+                    .ApplyMovementState(SimFrame, options, rhythmCancel.shouldRhythmCancel, rhythmCancel.beatOffset);
             }
 
             // If a player applies inputs to start a state at the start of the frame, we should apply those immediately
@@ -326,7 +329,7 @@ namespace Game.Sim
             {
                 for (int i = 0; i < Fighters.Length; i++)
                 {
-                    if (Fighters[i].Health <= 0)
+                    if (Fighters[i].Health <= 0 && !options.Players[i].Immortal)
                     {
                         Fighters[i].Lives--;
 
@@ -394,7 +397,7 @@ namespace Game.Sim
         private (bool, int) DoManiaStep((GameInput input, InputStatus status)[] inputs, Span<GameInput> outInputs)
         {
             (bool, int) rhythmCancel = (false, 0);
-            
+
             for (int i = 0; i < Manias.Length; i++)
             {
                 Manias[i].Tick(RealFrame, inputs[i].input);
@@ -420,18 +423,6 @@ namespace Game.Sim
 
             return rhythmCancel;
         }
-
-        private static readonly (InputFlags, AudioConfig.BeatSubdivision)[] COMBO =
-        {
-            (InputFlags.MediumAttack, AudioConfig.BeatSubdivision.QuarterNote),
-            (InputFlags.MediumAttack | InputFlags.Down, AudioConfig.BeatSubdivision.QuarterNote),
-            (InputFlags.MediumAttack, AudioConfig.BeatSubdivision.QuarterNote),
-            (InputFlags.HeavyAttack | InputFlags.Down, AudioConfig.BeatSubdivision.QuarterNote),
-            (InputFlags.Up | InputFlags.Right, AudioConfig.BeatSubdivision.EighthNote),
-            (InputFlags.LightAttack, AudioConfig.BeatSubdivision.EighthNote),
-            (InputFlags.MediumAttack, AudioConfig.BeatSubdivision.QuarterNote),
-            (InputFlags.HeavyAttack, AudioConfig.BeatSubdivision.QuarterNote),
-        };
 
         private void DoCollisionStep(GameOptions options)
         {
@@ -521,36 +512,13 @@ namespace Game.Sim
                         && outcome.Kind == HitKind.Hit
                     )
                     {
-                        // set hitstop to the next beat
-                        Frame nextBeat = RealFrame;
-                        while (nextBeat - RealFrame < options.Global.ManiaSlowTicks)
-                        {
-                            nextBeat = options.Global.Audio.NextBeat(
-                                nextBeat + 1,
-                                AudioConfig.BeatSubdivision.QuarterNote
-                            );
-                        }
-
-                        HitstopFramesRemaining = nextBeat - (RealFrame + options.Global.ManiaSlowTicks);
-                        for (int i = 0; i < COMBO.Length; i++)
-                        {
-                            Manias[owners.Item1]
-                                .QueueNote(
-                                    i % 4,
-                                    new ManiaNote
-                                    {
-                                        Length = 0,
-                                        Tick = nextBeat,
-                                        HitInput = COMBO[i].Item1,
-                                    }
-                                );
-                            nextBeat = options.Global.Audio.NextBeat(
-                                nextBeat + 1,
-                                COMBO[i].Item2
-                            );
-                        }
-
-                        Manias[owners.Item1].Enable(nextBeat);
+                        HitstopFramesRemaining = ComboManager.StartRhythmCombo(
+                            RealFrame,
+                            ref Manias[owners.Item1],
+                            Fighters[owners.Item1].FacingDir,
+                            options,
+                            options.Players[owners.Item1].Character
+                        );
                         GameMode = GameMode.ManiaStart;
                         ModeStart = RealFrame;
                         // TODO: show mania screen only after the maximum rollback frames to ensure no visual artifacting
@@ -561,7 +529,9 @@ namespace Game.Sim
             {
                 HandleCollision(options, clank.Value);
             }
-            else if (collide.HasValue)
+
+            // handle hurt hurt always
+            if (collide.HasValue)
             {
                 HandleCollision(options, collide.Value);
             }
@@ -584,59 +554,83 @@ namespace Game.Sim
             HypeMeter = Mathsf.Clamp(HypeMeter, -options.Global.MaxHype, options.Global.MaxHype);
         }
 
+        private void HandleClank(GameOptions options, Physics<BoxProps>.Collision c)
+        {
+            if (c.BoxA.Data.Kind != HitboxKind.Hitbox || c.BoxB.Data.Kind != HitboxKind.Hitbox)
+            {
+                throw new InvalidOperationException("Not clank");
+            }
+
+            // TODO: check if moves are allowed to clank
+            Fighters[c.BoxA.Owner].ApplyClank(SimFrame, options);
+            Fighters[c.BoxB.Owner].ApplyClank(SimFrame, options);
+        }
+
+        private void HandlePush(GameOptions options, Physics<BoxProps>.Collision c)
+        {
+            if (c.BoxA.Data.Kind != HitboxKind.Hurtbox || c.BoxB.Data.Kind != HitboxKind.Hurtbox)
+            {
+                throw new InvalidOperationException("Not push");
+            }
+
+            sfloat aPushFactor = Fighters[c.BoxA.Owner].OnGround(options) ? (sfloat)1f : (sfloat)0.1f;
+            sfloat bPushFactor = Fighters[c.BoxB.Owner].OnGround(options) ? (sfloat)1f : (sfloat)0.1f;
+
+            sfloat aPush = aPushFactor / (aPushFactor + bPushFactor);
+            sfloat bPush = bPushFactor / (aPushFactor + bPushFactor);
+            if (c.BoxA.Box.Pos.x < c.BoxB.Box.Pos.x)
+            {
+                Fighters[c.BoxA.Owner].Position.x -= c.OverlapX * aPush;
+                Fighters[c.BoxB.Owner].Position.x += c.OverlapX * bPush;
+            }
+            else
+            {
+                Fighters[c.BoxA.Owner].Position.x += c.OverlapX * aPush;
+                Fighters[c.BoxB.Owner].Position.x -= c.OverlapX * bPush;
+            }
+        }
+
+        private HitOutcome HandleHit(
+            GameOptions options,
+            Physics<BoxProps>.BoxEntry attacker,
+            Physics<BoxProps>.BoxEntry defender
+        )
+        {
+            if (attacker.Data.Kind != HitboxKind.Hitbox || defender.Data.Kind != HitboxKind.Hurtbox)
+            {
+                throw new InvalidOperationException("Not hit");
+            }
+
+            sfloat mult = 1 + (sfloat)0.2f * (HypeMeter / options.Global.MaxHype) * (attacker.Owner * -2 + 1);
+            return Fighters[defender.Owner]
+                .ApplyHit(
+                    SimFrame,
+                    Fighters[attacker.Owner].StateStart,
+                    options.Players[defender.Owner].Character,
+                    attacker.Data,
+                    defender.Box.ClosestPointToCenter(attacker.Box),
+                    mult
+                );
+        }
+
         private HitOutcome HandleCollision(GameOptions options, Physics<BoxProps>.Collision c)
         {
             if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
             {
-                sfloat mult = 1 + (sfloat)0.2f * (HypeMeter / options.Global.MaxHype) * (c.BoxA.Owner * -2 + 1);
-                return Fighters[c.BoxB.Owner]
-                    .ApplyHit(
-                        SimFrame,
-                        Fighters[c.BoxA.Owner].StateStart,
-                        options.Players[c.BoxB.Owner].Character,
-                        c.BoxA.Data,
-                        c.BoxB.Box.ClosestPointToCenter(c.BoxA.Box),
-                        mult
-                    );
+                return HandleHit(options, c.BoxA, c.BoxB);
             }
             else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
             {
-                sfloat mult = 1 + (sfloat)0.2f * (HypeMeter / options.Global.MaxHype) * (c.BoxB.Owner * -2 + 1);
-                return Fighters[c.BoxA.Owner]
-                    .ApplyHit(
-                        SimFrame,
-                        Fighters[c.BoxB.Owner].StateStart,
-                        options.Players[c.BoxA.Owner].Character,
-                        c.BoxB.Data,
-                        c.BoxA.Box.ClosestPointToCenter(c.BoxB.Box),
-                        mult
-                    );
+                return HandleHit(options, c.BoxB, c.BoxA);
             }
             else if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
             {
-                // TODO: check if moves are allowed to clank
-                Fighters[c.BoxA.Owner].ApplyClank(SimFrame, options);
-                Fighters[c.BoxB.Owner].ApplyClank(SimFrame, options);
+                HandleClank(options, c);
             }
             else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
             {
-                sfloat aPushFactor = Fighters[c.BoxA.Owner].OnGround(options) ? (sfloat)1f : (sfloat)0.1f;
-                sfloat bPushFactor = Fighters[c.BoxB.Owner].OnGround(options) ? (sfloat)1f : (sfloat)0.1f;
-
-                sfloat aPush = aPushFactor / (aPushFactor + bPushFactor);
-                sfloat bPush = bPushFactor / (aPushFactor + bPushFactor);
-                if (c.BoxA.Box.Pos.x < c.BoxB.Box.Pos.x)
-                {
-                    Fighters[c.BoxA.Owner].Position.x -= c.OverlapX * aPush;
-                    Fighters[c.BoxB.Owner].Position.x += c.OverlapX * bPush;
-                }
-                else
-                {
-                    Fighters[c.BoxA.Owner].Position.x += c.OverlapX * aPush;
-                    Fighters[c.BoxB.Owner].Position.x -= c.OverlapX * bPush;
-                }
+                HandlePush(options, c);
             }
-
             return new HitOutcome { Kind = HitKind.None };
         }
 
