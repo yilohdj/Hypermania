@@ -173,7 +173,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c5bab2928eb45047b779b418a347218, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _hitboxData: {fileID: 11400000, guid: d3101e0436774ef4faf89d1e286ccbd3, type: 2}
+  _config: {fileID: 11400000, guid: b45871cdc2550e849ad28a3a712b2d32, type: 2}
   _animStateName: 5_S_Idle
 --- !u!114 &5807608239448899918
 MonoBehaviour:

@@ -1,4 +1,3 @@
-using Design.Animation;
 using Design.Configs;
 using Game.Sim;
 using UnityEngine;
@@ -9,7 +8,7 @@ namespace Game.View.Projectiles
     public class NytheaProjectileView : ProjectileView
     {
         [SerializeField]
-        private HitboxData _hitboxData;
+        private ProjectileConfig _config;
 
         [SerializeField]
         private string _animStateName;
@@ -24,8 +23,8 @@ namespace Game.View.Projectiles
             transform.localScale = new Vector3(state.FacingDir == FighterFacing.Left ? -1 : 1, 1f, 1f);
 
             int ticks = simFrame - state.CreationFrame;
-            int totalTicks = _hitboxData.TotalTicks;
-            if (_hitboxData.Clip.isLooping)
+            int totalTicks = _config.HitboxData.TotalTicks;
+            if (_config.HitboxData.Clip.isLooping)
             {
                 ticks %= totalTicks;
             }

@@ -1,13 +1,13 @@
-using System;
 using Design.Animation;
 using Game;
 using Game.View.Projectiles;
+using UnityEngine;
 using Utils.SoftFloat;
 
 namespace Design.Configs
 {
-    [Serializable]
-    public class ProjectileConfig
+    [CreateAssetMenu(menuName = "Hypermania/Projectile Config")]
+    public class ProjectileConfig : ScriptableObject
     {
         public CharacterState TriggerState;
         public int SpawnTick;
