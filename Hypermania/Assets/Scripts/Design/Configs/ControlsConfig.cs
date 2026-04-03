@@ -36,6 +36,7 @@ namespace Design.Configs
             { InputFlags.Mania5, new Binding(Key.None, Key.None, GamepadButtons.None, GamepadButtons.None) },
             { InputFlags.Mania6, new Binding(Key.None, Key.None, GamepadButtons.None, GamepadButtons.None) },
             { InputFlags.Dash, new Binding(Key.LeftShift, Key.None, GamepadButtons.LeftStick, GamepadButtons.None) },
+            { InputFlags.Grab, new Binding(Key.U, Key.None, GamepadButtons.LeftShoulder, GamepadButtons.None) },
         };
 
         public static EnumArray<InputFlags, Binding> DefaultBindings

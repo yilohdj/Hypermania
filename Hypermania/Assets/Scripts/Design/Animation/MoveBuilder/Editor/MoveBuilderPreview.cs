@@ -71,6 +71,15 @@ namespace Design.Animation.MoveBuilder.Editor
                 return;
             }
 
+            // Add Grabbox (G)
+            if (e.keyCode == KeyCode.G && !actionKey && !shift)
+            {
+                m.AddBox(state, HitboxKind.Grabbox);
+                GUI.changed = true;
+                e.Use();
+                return;
+            }
+
             // Duplicate Selected (D)
             if (e.keyCode == KeyCode.D && !actionKey)
             {
@@ -226,7 +235,13 @@ namespace Design.Animation.MoveBuilder.Editor
 
             // Outline
             var prev = Handles.color;
-            Handles.color = box.Props.Kind == HitboxKind.Hurtbox ? Color.green : Color.red;
+            Handles.color = box.Props.Kind switch
+            {
+                HitboxKind.Hurtbox => Color.green,
+                HitboxKind.Hitbox => Color.red,
+                HitboxKind.Grabbox => new Color(0.8f, 0.2f, 0.8f),
+                _ => Color.white,
+            };
             Handles.DrawAAPolyLine(2f, p0, p1, p2, p3, p0);
 
             // If selected: show move + scale handles
@@ -255,6 +270,10 @@ namespace Design.Animation.MoveBuilder.Editor
                 if (box.Props.Kind == HitboxKind.Hitbox)
                 {
                     DrawAndEditKnockbackArrow(fighter, m, state, frame, i);
+                }
+                else if (box.Props.Kind == HitboxKind.Grabbox)
+                {
+                    DrawAndEditGrabPositionArrow(fighter, m, state, frame, i);
                 }
             }
 
@@ -313,6 +332,64 @@ namespace Design.Animation.MoveBuilder.Editor
                 Vector2 newTipL = new Vector2(newTipL3.x, newTipL3.y);
 
                 box.Props.Knockback = (SVector2)(newTipL - centerL);
+
+                m.SetBox(state, index, box);
+            }
+
+            Handles.color = prev;
+        }
+
+        private void DrawAndEditGrabPositionArrow(
+            EntityView fighter,
+            MoveBuilderModel m,
+            MoveBuilderAnimationState state,
+            FrameData frame,
+            int index
+        )
+        {
+            Transform root = fighter.transform;
+
+            var box = frame.Boxes[index];
+            if (box.Props.Kind != HitboxKind.Grabbox)
+                return;
+
+            var props = box.Props;
+
+            Vector2 centerL = (Vector2)box.CenterLocal;
+            Vector2 gpL = (Vector2)props.GrabPosition;
+            Vector2 tipL = centerL + gpL;
+
+            Vector3 centerW = root.TransformPoint(new Vector3(centerL.x, centerL.y, 0f));
+            Vector3 tipW = root.TransformPoint(new Vector3(tipL.x, tipL.y, 0f));
+
+            var prev = Handles.color;
+            Handles.color = new Color(0.8f, 0.2f, 0.8f);
+            Handles.DrawAAPolyLine(2f, centerW, tipW);
+            Handles.ArrowHandleCap(
+                0,
+                tipW,
+                Quaternion.LookRotation(Vector3.forward, (tipW - centerW).normalized),
+                HandleUtility.GetHandleSize(tipW) * 0.4f,
+                EventType.Repaint
+            );
+
+            EditorGUI.BeginChangeCheck();
+            Vector3 newTipW = Handles.Slider2D(
+                tipW,
+                root.forward,
+                root.right,
+                root.up,
+                HandleUtility.GetHandleSize(tipW) * 0.08f,
+                Handles.DotHandleCap,
+                snap: Vector2.zero
+            );
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                Vector3 newTipL3 = root.InverseTransformPoint(newTipW);
+                Vector2 newTipL = new Vector2(newTipL3.x, newTipL3.y);
+
+                box.Props.GrabPosition = (SVector2)(newTipL - centerL);
 
                 m.SetBox(state, index, box);
             }

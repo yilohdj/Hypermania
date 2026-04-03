@@ -82,5 +82,6 @@ namespace Game.Sim
         Mania5 = 1 << 14,
         Mania6 = 1 << 15,
         Dash = 1 << 16,
+        Grab = 1 << 17,
     }
 }

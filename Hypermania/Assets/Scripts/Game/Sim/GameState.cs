@@ -563,6 +563,14 @@ namespace Game.Sim
                 {
                     hitPair = (c.BoxB.Owner, c.BoxA.Owner);
                 }
+                else if (c.BoxA.Data.Kind == HitboxKind.Grabbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
+                {
+                    hitPair = (c.BoxA.Owner, c.BoxB.Owner);
+                }
+                else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Grabbox)
+                {
+                    hitPair = (c.BoxB.Owner, c.BoxA.Owner);
+                }
                 else if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
                 {
                     clank = c;
@@ -685,6 +693,11 @@ namespace Game.Sim
                 throw new InvalidOperationException("Not push");
             }
 
+            if (Fighters[c.BoxA.Owner].State == CharacterState.Grabbed || Fighters[c.BoxB.Owner].State == CharacterState.Grabbed)
+            {
+                return;
+            }
+
             sfloat aPushFactor = Fighters[c.BoxA.Owner].OnGround(options) ? (sfloat)1f : (sfloat)0.1f;
             sfloat bPushFactor = Fighters[c.BoxB.Owner].OnGround(options) ? (sfloat)1f : (sfloat)0.1f;
 
@@ -708,9 +721,29 @@ namespace Game.Sim
             Physics<BoxProps>.BoxEntry defender
         )
         {
-            if (attacker.Data.Kind != HitboxKind.Hitbox || defender.Data.Kind != HitboxKind.Hurtbox)
+            if (
+                (attacker.Data.Kind != HitboxKind.Hitbox && attacker.Data.Kind != HitboxKind.Grabbox)
+                || defender.Data.Kind != HitboxKind.Hurtbox
+            )
             {
                 throw new InvalidOperationException("Not hit");
+            }
+
+            if (attacker.Data.Kind == HitboxKind.Grabbox)
+            {
+                Fighters[defender.Owner]
+                    .ApplyGrab(
+                        SimFrame,
+                        attacker.Data,
+                        attacker.Box.Pos,
+                        ref Fighters[attacker.Owner]
+                    );
+
+                return new HitOutcome
+                {
+                    Kind = HitKind.Grabbed,
+                    Props = attacker.Data,
+                };
             }
 
             sfloat mult = 1 + (sfloat)0.2f * (HypeMeter / options.Global.MaxHype) * (attacker.Owner * -2 + 1);
@@ -732,6 +765,14 @@ namespace Game.Sim
                 return HandleHit(options, c.BoxA, c.BoxB);
             }
             else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
+            {
+                return HandleHit(options, c.BoxB, c.BoxA);
+            }
+            else if (c.BoxA.Data.Kind == HitboxKind.Grabbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
+            {
+                return HandleHit(options, c.BoxA, c.BoxB);
+            }
+            else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Grabbox)
             {
                 return HandleHit(options, c.BoxB, c.BoxA);
             }

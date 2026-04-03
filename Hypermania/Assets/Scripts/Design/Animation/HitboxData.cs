@@ -15,6 +15,7 @@ namespace Design.Animation
     {
         Hurtbox,
         Hitbox,
+        Grabbox,
     }
 
     [Serializable]
@@ -48,6 +49,7 @@ namespace Design.Animation
         public bool StartsRhythmCombo;
         public KnockdownKind KnockdownKind;
         public SVector2 Knockback;
+        public SVector2 GrabPosition;
 
         public bool Equals(BoxProps other) =>
             Kind == other.Kind
@@ -59,7 +61,8 @@ namespace Design.Animation
             && KnockdownKind == other.KnockdownKind
             && StartsRhythmCombo == other.StartsRhythmCombo
             && HitstopTicks == other.HitstopTicks
-            && BlockstopTicks == other.BlockstopTicks;
+            && BlockstopTicks == other.BlockstopTicks
+            && GrabPosition == other.GrabPosition;
 
         public override bool Equals(object obj) => obj is BoxProps other && Equals(other);
 
@@ -76,7 +79,8 @@ namespace Design.Animation
                     Knockback
                 ),
                 HitstopTicks,
-                BlockstopTicks
+                BlockstopTicks,
+                GrabPosition
             );
 
         public static bool operator ==(BoxProps a, BoxProps b) => a.Equals(b);
@@ -117,6 +121,7 @@ namespace Design.Animation
         Hitstun,
         Blockstun,
         Hitstop,
+        Grabbed,
     }
 
     public enum FrameAttribute
@@ -182,7 +187,7 @@ namespace Design.Animation
         {
             foreach (BoxData box in Boxes)
             {
-                if (box.Props.Kind == HitboxKind.Hitbox)
+                if (box.Props.Kind == HitboxKind.Hitbox || box.Props.Kind == HitboxKind.Grabbox)
                 {
                     outBox = box.Props;
                     return true;

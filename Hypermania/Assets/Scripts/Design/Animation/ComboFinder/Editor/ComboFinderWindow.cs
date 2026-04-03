@@ -367,6 +367,7 @@ namespace Design.Animation.ComboFinder.Editor
                 FrameType.Hitstun => new Color(0.9f, 0.6f, 0.5f),
                 FrameType.Blockstun => new Color(0.85f, 0.85f, 0.6f),
                 FrameType.Hitstop => new Color(0.4f, 0.4f, 0.4f),
+                FrameType.Grabbed => new Color(0.7f, 0.3f, 0.8f),
                 _ => Color.white,
             };
         }

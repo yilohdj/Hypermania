@@ -42,6 +42,7 @@ namespace Game.Sim
         public int AirDashCount;
         public VictoryKind[] Victories;
         public int NumVictories;
+        public bool GrabConnected;
 
         public int Index { get; private set; }
         public CharacterState State { get; private set; }
@@ -65,7 +66,7 @@ namespace Game.Sim
         public bool HitLastRealFrame =>
             HitProps.HasValue
             && HitLocation.HasValue
-            && (State == CharacterState.Death || State == CharacterState.Knockdown || State == CharacterState.Hit);
+            && (State == CharacterState.Death || State == CharacterState.Knockdown || State == CharacterState.Hit || State == CharacterState.Grabbed);
 
         public bool BlockedLastRealFrame =>
             HitProps.HasValue
@@ -231,6 +232,25 @@ namespace Game.Sim
 
         public void TickStateMachine(Frame frame, GameOptions options)
         {
+            if (State == CharacterState.Grab && GrabConnected)
+            {
+                bool backThrow = InputH.IsHeld(BackwardInput);
+                if (backThrow)
+                {
+                    FacingDir = FacingDir == FighterFacing.Right ? FighterFacing.Left : FighterFacing.Right;
+                }
+
+                CharacterConfig config = options.Players[Index].Character;
+                SetState(
+                    CharacterState.Throw,
+                    frame,
+                    frame + config.GetHitboxData(CharacterState.Throw).TotalTicks,
+                    true
+                );
+                GrabConnected = false;
+                return;
+            }
+
             // if animation ends, switch back to idle
             if (frame >= StateEnd)
             {
@@ -427,6 +447,8 @@ namespace Game.Sim
                 { (FighterAttackLocation.Aerial, InputFlags.MediumAttack), CharacterState.MediumAerial },
                 { (FighterAttackLocation.Aerial, InputFlags.HeavyAttack), CharacterState.SuperAerial },
                 { (FighterAttackLocation.Aerial, InputFlags.SpecialAttack), CharacterState.SpecialAerial },
+                { (FighterAttackLocation.Standing, InputFlags.Grab), CharacterState.Grab },
+                { (FighterAttackLocation.Crouching, InputFlags.Grab), CharacterState.Grab },
             };
 
         public void ApplyActiveState(
@@ -490,6 +512,10 @@ namespace Game.Sim
                     }
 
                     SetState(state, startFrame, startFrame + config.GetHitboxData(state).TotalTicks, true);
+                    if (state == CharacterState.Grab)
+                    {
+                        GrabConnected = false;
+                    }
                     return;
                 }
             }
@@ -678,6 +704,30 @@ namespace Game.Sim
 
             ComboedCount++;
             return new HitOutcome { Kind = HitKind.Hit, Props = props };
+        }
+
+        public void ApplyGrab(
+            Frame frame,
+            BoxProps props,
+            SVector2 hitboxCenter,
+            ref FighterState attacker
+        )
+        {
+            if (State != CharacterState.Grabbed)
+            {
+                ComboedCount++;
+            }
+            SetState(CharacterState.Grabbed, frame, Frame.Infinity);
+            Velocity = SVector2.zero;
+
+            SVector2 grabPos = props.GrabPosition;
+            if (attacker.FacingDir == FighterFacing.Left)
+            {
+                grabPos.x *= -1;
+            }
+
+            Position = hitboxCenter + grabPos;
+            attacker.GrabConnected = true;
         }
 
         public void ApplyClank(Frame frame, GameOptions options)
