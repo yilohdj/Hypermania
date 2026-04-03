@@ -573,7 +573,22 @@ namespace Game.Sim
                 }
                 else if (c.BoxA.Data.Kind == HitboxKind.Hitbox && c.BoxB.Data.Kind == HitboxKind.Hitbox)
                 {
-                    clank = c;
+                    bool aIsProjectile = c.BoxA.ProjectileIndex >= 0;
+                    bool bIsProjectile = c.BoxB.ProjectileIndex >= 0;
+
+                    if (aIsProjectile || bIsProjectile)
+                    {
+                        // Destroy any projectile(s) involved — no clank
+                        if (aIsProjectile)
+                            Projectiles[c.BoxA.ProjectileIndex].MarkedForDestroy = true;
+                        if (bIsProjectile)
+                            Projectiles[c.BoxB.ProjectileIndex].MarkedForDestroy = true;
+                    }
+                    else
+                    {
+                        // Both are fighter hitboxes — normal clank
+                        clank = c;
+                    }
                 }
                 else if (c.BoxA.Data.Kind == HitboxKind.Hurtbox && c.BoxB.Data.Kind == HitboxKind.Hurtbox)
                 {
@@ -613,7 +628,10 @@ namespace Game.Sim
                     {
                         sfloat damage = outcome.Props.Damage;
                         UpdateHype(options, attackerBox.Owner, damage);
+                    }
 
+                    if (outcome.Kind == HitKind.Hit || outcome.Kind == HitKind.Blocked)
+                    {
                         if (attackerBox.ProjectileIndex >= 0)
                         {
                             Projectiles[attackerBox.ProjectileIndex].MarkedForDestroy = true;
