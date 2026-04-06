@@ -19,6 +19,9 @@ namespace Scenes.Menus.InputSelect
         [SerializeField]
         private CharacterConfig _nytheaConfig;
 
+        [SerializeField]
+        private ControlsConfig[] _controlsConfigs;
+
         public void StartGame()
         {
             switch (SessionDirectory.Config)
@@ -52,7 +55,11 @@ namespace Scenes.Menus.InputSelect
                     HealOnActionable = SessionDirectory.Config == GameConfig.Training,
                 };
             }
-            options.LocalPlayers[0] = new LocalPlayerOptions { InputDevice = p1 };
+            options.LocalPlayers[0] = new LocalPlayerOptions
+            {
+                InputDevice = p1,
+                Controls = _controlsConfigs.Length >= 1 ? _controlsConfigs[0] : null,
+            };
             options.InfoOptions = new InfoOptions { ShowFrameData = false };
 
             SessionDirectory.Options = options;
@@ -82,7 +89,11 @@ namespace Scenes.Menus.InputSelect
                     Character = _nytheaConfig,
                     HealOnActionable = SessionDirectory.Config == GameConfig.Training,
                 };
-                options.LocalPlayers[i] = new LocalPlayerOptions { InputDevice = i == 0 ? p1 : p2 };
+                options.LocalPlayers[i] = new LocalPlayerOptions
+                {
+                    InputDevice = i == 0 ? p1 : p2,
+                    Controls = _controlsConfigs.Length <= i + 1 ? _controlsConfigs[i] : null,
+                };
             }
             options.InfoOptions = new InfoOptions { ShowFrameData = SessionDirectory.Config == GameConfig.Training };
 
