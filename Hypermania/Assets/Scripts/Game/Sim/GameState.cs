@@ -98,21 +98,6 @@ namespace Game.Sim
         public Frame ModeStart;
 
         /// <summary>
-        /// Frame on which to zero the defender's horizontal velocity when a
-        /// rhythm combo starts. Set to one frame before the first note's input
-        /// window so the defender can't drift out of the position the combo
-        /// generator simulated. <see cref="Frame.NullFrame"/> when inactive.
-        /// </summary>
-        public Frame DefenderZeroVxFrame;
-
-        /// <summary>
-        /// Player index whose horizontal velocity should be zeroed on
-        /// <see cref="DefenderZeroVxFrame"/>. Only meaningful when that frame
-        /// is not <see cref="Frame.NullFrame"/>.
-        /// </summary>
-        public int DefenderZeroVxIndex;
-
-        /// <summary>
         /// Use this static builder instead of the constructor for creating new GameStates. This is because MemoryPack,
         /// which we use to serialize the GameState, places some funky restrictions on the constructor's paratmeter
         /// list.
@@ -134,8 +119,6 @@ namespace Game.Sim
                 HypeMeter = (sfloat)0f,
                 GameMode = GameMode.Countdown,
                 SpeedRatio = 1,
-                DefenderZeroVxFrame = Frame.NullFrame,
-                DefenderZeroVxIndex = 0,
             };
             for (int i = 0; i < options.Players.Length; i++)
             {
@@ -249,16 +232,6 @@ namespace Game.Sim
             {
                 Manias[i].ManiaEvents.Clear();
                 Fighters[i].ClearViewNotifiers();
-            }
-
-            // Zero the defender's horizontal velocity on the frame right
-            // before the first mania note's input window opens, so knockback
-            // drift doesn't shift them out of the combo generator's simulated
-            // position.
-            if (DefenderZeroVxFrame != Frame.NullFrame && RealFrame >= DefenderZeroVxFrame)
-            {
-                Fighters[DefenderZeroVxIndex].Velocity.x = sfloat.Zero;
-                DefenderZeroVxFrame = Frame.NullFrame;
             }
 
             if (GameMode == GameMode.End)
@@ -693,18 +666,6 @@ namespace Game.Sim
                             this,
                             owners.Item1
                         );
-                        // Schedule zeroing the defender's horizontal velocity
-                        // one frame before the first note's input window opens,
-                        // so they don't drift out of the position the combo
-                        // generator simulated against. The first note lives at
-                        // the front of channel 0 (ComboGenerator queues the
-                        // first move there via `i % 4`).
-                        {
-                            Frame firstNoteTick = Manias[owners.Item1].Channels[0].Notes.Front().Tick;
-                            DefenderZeroVxFrame =
-                                firstNoteTick - Manias[owners.Item1].Config.HitHalfRange - 1;
-                            DefenderZeroVxIndex = owners.Item2;
-                        }
                         // TODO: show mania screen only after the maximum rollback frames to ensure no visual artifacting
                     }
                 }
