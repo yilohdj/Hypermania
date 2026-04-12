@@ -25,6 +25,7 @@ namespace Design.Configs
         public sfloat BackSpeed;
         public sfloat JumpVelocity;
         public sfloat Health;
+        public sfloat SuperMax;
         public sfloat BurstMax;
         public sfloat ForwardDashDistance;
         public sfloat BackDashDistance;

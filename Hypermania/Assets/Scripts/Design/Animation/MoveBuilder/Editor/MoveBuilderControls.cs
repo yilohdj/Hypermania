@@ -206,7 +206,6 @@ namespace Design.Animation.MoveBuilder.Editor
                 p.HitstopTicks = EditorGUILayout.IntField("Hitstop Ticks", p.HitstopTicks);
                 p.BlockstopTicks = EditorGUILayout.IntField("Blockstop Ticks", p.BlockstopTicks);
                 p.Knockback = SFloatGUI.Field("Knockback", p.Knockback);
-                p.StartsRhythmCombo = EditorGUILayout.Toggle("Starts rhythm combo", p.StartsRhythmCombo);
             }
 
             using (new EditorGUI.DisabledScope(p.Kind != HitboxKind.Grabbox))

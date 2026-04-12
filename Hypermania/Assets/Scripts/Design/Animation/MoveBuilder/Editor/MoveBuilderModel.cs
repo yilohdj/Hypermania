@@ -112,7 +112,6 @@ namespace Design.Animation.MoveBuilder.Editor
                     HitstunTicks = kind == HitboxKind.Hitbox ? 12 : 0,
                     Knockback = kind == HitboxKind.Hitbox ? new SVector2(1, 0) : SVector2.zero,
                     GrabPosition = kind == HitboxKind.Grabbox ? new SVector2(1, 0) : SVector2.zero,
-                    StartsRhythmCombo = false,
                 },
             };
 

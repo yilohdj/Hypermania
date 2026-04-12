@@ -454,6 +454,13 @@ namespace Game.Sim
                 Fighters[i].ApplyAerialCancel(SimFrame, options, options.Players[i].Character);
             }
 
+            if (GameMode == GameMode.Fighting)
+            {
+                for (int i = 0; i < Fighters.Length; i++)
+                {
+                    Fighters[i].AddSuper(options.Global.PassiveSuperGain, options);
+                }
+            }
             // Execute a pending rhythm combo that was queued by
             // DoCollisionStep earlier this frame. Running the generator
             // here (rather than inline during DoCollisionStep) means the
@@ -465,6 +472,7 @@ namespace Game.Sim
             {
                 int attackerIndex = PendingRhythmComboAttacker;
                 PendingRhythmComboAttacker = -1;
+                Fighters[attackerIndex].Super = 0;
                 HitstopFramesRemaining = ComboManager.StartRhythmCombo(
                     RealFrame,
                     ref Manias[attackerIndex],
@@ -715,11 +723,11 @@ namespace Game.Sim
                     //to start a rhythm combo, we must sure that the move was not traded
                     if (
                         options.EnableMania
-                        && attackerBox.Data.StartsRhythmCombo
                         && !PhysicsCtx.HurtHitCollisions.ContainsKey((owners.Item2, owners.Item1))
                         && GameMode == GameMode.Fighting
                         && outcome.Kind == HitKind.Hit
                         && PendingRhythmComboAttacker < 0
+                        && Fighters[owners.Item1].Super >= options.Players[owners.Item1].Character.SuperMax
                     )
                     {
                         // Defer the actual combo generation until after the
@@ -736,6 +744,13 @@ namespace Game.Sim
                         ModeStart = RealFrame;
                         PendingRhythmComboAttacker = owners.Item1;
                         // TODO: show mania screen only after the maximum rollback frames to ensure no visual artifacting
+                    }
+                    
+                    // Add super checking to start a combo so that the combo only starts if the meter is alr at max
+                    if (outcome.Kind == HitKind.Hit && GameMode == GameMode.Fighting)
+                    {
+                        sfloat damage = outcome.Props.Damage;
+                        Fighters[attackerBox.Owner].AddSuper(damage, options);
                     }
                 }
             }

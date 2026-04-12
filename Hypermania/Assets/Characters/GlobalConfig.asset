@@ -30,11 +30,12 @@ MonoBehaviour:
   SuperJumpMultiplier:
     rawValue: 1067450368
   RoundTimeTicks: 10800
-  RoundCountdownTicks: 180
   MaxHype:
     rawValue: 1120403456
   HypeMovementFactor:
     rawValue: 1050253722
+  PassiveSuperGain:
+    rawValue: 1028443341
   CameraHalfHeight:
     rawValue: 1069547520
   CameraPadding:
@@ -43,6 +44,9 @@ MonoBehaviour:
   FloatingFactor:
     rawValue: 1066192077
   ManiaSlowTicks: 45
+  ManiaFailStunTicks: 30
+  ManiaFailKnockbackMagnitude:
+    rawValue: 1069547520
   _inputConfig:
     DashWindow: 12
     SuperJumpWindow: 8

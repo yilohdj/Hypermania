@@ -28,6 +28,8 @@ MonoBehaviour:
     rawValue: 1089470464
   Health:
     rawValue: 1132068864
+  SuperMax:
+    rawValue: 1128792064
   BurstMax:
     rawValue: 1112014848
   ForwardDashDistance:

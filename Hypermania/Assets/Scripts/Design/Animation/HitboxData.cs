@@ -46,7 +46,6 @@ namespace Design.Animation
         public int BlockstunTicks;
         public int HitstopTicks;
         public int BlockstopTicks;
-        public bool StartsRhythmCombo;
         public KnockdownKind KnockdownKind;
         public SVector2 Knockback;
         public SVector2 GrabPosition;
@@ -59,7 +58,6 @@ namespace Design.Animation
             && BlockstunTicks == other.BlockstunTicks
             && Knockback == other.Knockback
             && KnockdownKind == other.KnockdownKind
-            && StartsRhythmCombo == other.StartsRhythmCombo
             && HitstopTicks == other.HitstopTicks
             && BlockstopTicks == other.BlockstopTicks
             && GrabPosition == other.GrabPosition;
@@ -74,7 +72,6 @@ namespace Design.Animation
                     HitstunTicks,
                     Damage,
                     BlockstunTicks,
-                    StartsRhythmCombo,
                     KnockdownKind,
                     Knockback
                 ),

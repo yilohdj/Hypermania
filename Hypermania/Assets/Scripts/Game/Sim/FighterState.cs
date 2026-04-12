@@ -38,6 +38,7 @@ namespace Game.Sim
         public int ComboedCount;
         public InputHistory InputH;
         public int Lives;
+        public sfloat Super;
         public sfloat Burst;
         public int AirDashCount;
         public VictoryKind[] Victories;
@@ -145,6 +146,7 @@ namespace Game.Sim
                 FacingDir = facingDirection,
                 Lives = lives,
                 Burst = 0,
+                Super = 0,
                 AirDashCount = 0,
                 Victories = new VictoryKind[lives],
                 NumVictories = 0,
@@ -167,6 +169,7 @@ namespace Game.Sim
             InputH.Clear(); // Clear, don't want to read input from a previous round.
             // TODO: character dependent?
             Burst = 0;
+            Super = 0;
             AirDashCount = 0;
             Health = config.Health;
             FacingDir = facingDirection;
@@ -839,6 +842,12 @@ namespace Game.Sim
             SetState(CharacterState.Hit, frame, frame + options.Global.ClankTicks);
 
             Velocity = SVector2.zero;
+        }
+
+        public void AddSuper(sfloat amount, GameOptions options)
+        {
+            Super += amount;
+            Super = Mathsf.Min(Super, options.Players[Index].Character.SuperMax);
         }
     }
 }
