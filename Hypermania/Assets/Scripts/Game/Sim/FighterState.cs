@@ -44,8 +44,7 @@ namespace Game.Sim
         public VictoryKind[] Victories;
         public int NumVictories;
         public bool GrabConnected;
-        public bool IsPoweredUp;
-        public int PoweredUpHitsRemaining;
+        public bool IsSuperAttack;
 
         /// <summary>
         /// Set when this fighter is in hitstun while a mania is active. Keeps
@@ -154,8 +153,7 @@ namespace Game.Sim
                 Victories = new VictoryKind[lives],
                 NumVictories = 0,
                 LockedHitstun = false,
-                IsPoweredUp = false,
-                PoweredUpHitsRemaining = 0,
+                IsSuperAttack = false,
             };
             return state;
         }
@@ -173,8 +171,7 @@ namespace Game.Sim
             LockedHitstun = false;
             InputH.Clear(); // Clear, don't want to read input from a previous round.
             // TODO: character dependent?
-            IsPoweredUp = false;
-            PoweredUpHitsRemaining = 0;
+            IsSuperAttack = false;
             Burst = 0;
             Super = 0;
             AirDashCount = 0;
@@ -292,6 +289,8 @@ namespace Game.Sim
             // if animation ends, switch back to idle
             if (frame >= StateEnd)
             {
+                IsSuperAttack = false;
+
                 // TODO: is best place here?
                 if (State.IsDash())
                 {
@@ -541,14 +540,19 @@ namespace Game.Sim
 
             int bufferWindow = options.Global.Input.InputBufferWindow;
 
-            // Activate powered-up state on Super press (requires full meter, must be actionable)
-            if (Actionable
-                && InputH.PressedRecently(InputFlags.Super, bufferWindow)
-                && !IsPoweredUp
+            // Double-tap heavy: if in a heavy attack and heavy pressed again within the super window, mark as super
+            int superWindow = options.Global.Input.SuperAttackWindow;
+            bool isHeavyAttackState = State == CharacterState.HeavyAttack
+                || State == CharacterState.HeavyAerial
+                || State == CharacterState.HeavyCrouching;
+            if (isHeavyAttackState
+                && !IsSuperAttack
+                && InputH.PressedRecently(InputFlags.HeavyAttack, bufferWindow)
+                && simFrame - StateStart > bufferWindow
+                && simFrame - StateStart <= superWindow
                 && Super >= options.Players[Index].Character.SuperMax)
             {
-                IsPoweredUp = true;
-                PoweredUpHitsRemaining = options.Global.PoweredUpMaxHits;
+                IsSuperAttack = true;
                 Super = 0;
             }
 
@@ -832,15 +836,6 @@ namespace Game.Sim
             Burst = Mathsf.Clamp(Burst, sfloat.Zero, characterConfig.BurstMax);
 
             Velocity = props.Knockback;
-
-            if (IsPoweredUp)
-            {
-                PoweredUpHitsRemaining--;
-                if (PoweredUpHitsRemaining <= 0)
-                {
-                    IsPoweredUp = false;
-                }
-            }
 
             ComboedCount++;
             return new HitOutcome { Kind = HitKind.Hit, Props = props };

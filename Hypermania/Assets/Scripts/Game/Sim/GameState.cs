@@ -472,8 +472,7 @@ namespace Game.Sim
             {
                 int attackerIndex = PendingRhythmComboAttacker;
                 PendingRhythmComboAttacker = -1;
-                Fighters[attackerIndex].IsPoweredUp = false;
-                Fighters[attackerIndex].PoweredUpHitsRemaining = 0;
+                Fighters[attackerIndex].IsSuperAttack = false;
                 HitstopFramesRemaining = ComboManager.StartRhythmCombo(
                     RealFrame,
                     ref Manias[attackerIndex],
@@ -728,7 +727,7 @@ namespace Game.Sim
                         && GameMode == GameMode.Fighting
                         && outcome.Kind == HitKind.Hit
                         && PendingRhythmComboAttacker < 0
-                        && Fighters[owners.Item1].IsPoweredUp
+                        && Fighters[owners.Item1].IsSuperAttack
                     )
                     {
                         // Defer the actual combo generation until after the
