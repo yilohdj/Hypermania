@@ -3,16 +3,24 @@ using UnityEngine;
 namespace Game.View.Events.Vfx
 {
     [RequireComponent(typeof(Animator))]
-    public class BlockEffect : VfxEffect
+    public class AnimatorVfxEffect : VfxEffect
     {
-        private string _startStateName = "Block";
+        [SerializeField]
+        private string _stateName = "Block";
+
+        [SerializeField]
+        private bool _rotateWithDirection = true;
 
         public override void StartEffect(ViewEvent<VfxEvent> ev)
         {
             transform.position = new Vector3(ev.Event.Position.x, ev.Event.Position.y, transform.position.z);
-            transform.rotation = Quaternion.FromToRotation(Vector3.right, -ev.Event.Direction);
-            Animator animator = GetComponent<Animator>();
-            animator.Play(_startStateName);
+
+            if (_rotateWithDirection)
+            {
+                transform.rotation = Quaternion.FromToRotation(Vector3.right, -ev.Event.Direction);
+            }
+
+            GetComponent<Animator>().Play(_stateName);
         }
 
         public override void EndEffect() { }

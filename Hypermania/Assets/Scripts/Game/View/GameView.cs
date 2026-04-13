@@ -241,16 +241,13 @@ namespace Game.View
                 int maniaViewIdx = GetManiaViewIndex(state, i);
                 _playerParams[maniaViewIdx]
                     .ManiaView.RollbackRender(state.RealFrame, state.Manias[i], _params.VfxManager, _params.SfxManager);
+                if (state.Fighters[i].SuperMaxedThisRealFrame)
+                {
+                    _params.SfxManager.AddDesired(SfxKind.SuperReady, state.RealFrame, hash: i);
+                }
                 if (state.Fighters[i].HitLastRealFrame)
                 {
-                    _params.SfxManager.AddDesired(
-                        new ViewEvent<SfxEvent>
-                        {
-                            Event = new SfxEvent { Kind = SfxKind.MediumPunch },
-                            StartFrame = state.RealFrame,
-                            Hash = i,
-                        }
-                    );
+                    _params.SfxManager.AddDesired(SfxKind.MediumPunch, state.RealFrame, hash: i);
                     if (!_disableCameraShake)
                     {
                         _params.CameraShakeManager.AddDesired(

@@ -78,50 +78,20 @@ namespace Game.View.Fighters
             {
                 foreach (SfxKind sfxKind in _characterConfig.MoveSfx.Sfx[state.State].Kinds)
                 {
-                    sfxManager.AddDesired(
-                        new ViewEvent<SfxEvent>
-                        {
-                            Event = new SfxEvent { Kind = sfxKind },
-                            StartFrame = realFrame,
-                            Hash = 0,
-                        }
-                    );
+                    sfxManager.AddDesired(sfxKind, realFrame);
                 }
             }
             if (state.BlockedLastRealFrame)
             {
-                vfxManager.AddDesired(
-                    new ViewEvent<VfxEvent>
-                    {
-                        Event = new VfxEvent
-                        {
-                            Kind = VfxKind.Block,
-                            Direction = (Vector2)state.HitProps.Value.Knockback,
-                            Position = (Vector2)state.HitLocation.Value,
-                        },
-                        StartFrame = realFrame,
-                        Hash = 0,
-                    }
-                );
-                sfxManager.AddDesired(
-                    new ViewEvent<SfxEvent>
-                    {
-                        Event = new SfxEvent { Kind = SfxKind.Block },
-                        StartFrame = realFrame,
-                        Hash = 0,
-                    }
-                );
+                vfxManager.AddDesired(VfxKind.Block, realFrame,
+                    position: (Vector2)state.HitLocation.Value,
+                    direction: (Vector2)state.HitProps.Value.Knockback);
+                sfxManager.AddDesired(SfxKind.Block, realFrame);
             }
             if (state.HitLastRealFrame)
             {
-                vfxManager.AddDesired(
-                    new ViewEvent<VfxEvent>()
-                    {
-                        Event = new VfxEvent { Kind = VfxKind.SmallHit, Position = (Vector2)state.HitLocation },
-                        StartFrame = realFrame,
-                        Hash = 0,
-                    }
-                );
+                vfxManager.AddDesired(VfxKind.SmallHit, realFrame,
+                    position: (Vector2)state.HitLocation);
             }
             if (state.DashedLastRealFrame)
             {
@@ -129,19 +99,9 @@ namespace Game.View.Fighters
                     state.State == CharacterState.ForwardDash ? state.ForwardVector : state.BackwardVector
                 );
 
-                vfxManager.AddDesired(
-                    new ViewEvent<VfxEvent>
-                    {
-                        Event = new VfxEvent
-                        {
-                            Kind = VfxKind.DashDust,
-                            Direction = dir,
-                            Position = (Vector2)state.Position + dir * _dustEmitterLocation.localPosition.x,
-                        },
-                        StartFrame = realFrame,
-                        Hash = 0,
-                    }
-                );
+                vfxManager.AddDesired(VfxKind.DashDust, realFrame,
+                    position: (Vector2)state.Position + dir * _dustEmitterLocation.localPosition.x,
+                    direction: dir);
             }
         }
 

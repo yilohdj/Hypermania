@@ -726,7 +726,7 @@ namespace Game.Sim
             if ((input & InputFlags.MediumAttack) != 0)
                 return crouching ? CharacterState.MediumCrouching : CharacterState.MediumAttack;
             if ((input & InputFlags.HeavyAttack) != 0)
-                return crouching ? CharacterState.SuperCrouching : CharacterState.SuperAttack;
+                return crouching ? CharacterState.HeavyCrouching : CharacterState.HeavyAttack;
             if ((input & InputFlags.SpecialAttack) != 0)
                 return crouching ? CharacterState.SpecialCrouching : CharacterState.SpecialAttack;
             return CharacterState.Idle;

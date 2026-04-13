@@ -114,43 +114,13 @@ namespace Game.View.Mania
             {
                 if (maniaState.ManiaEvents[i].Kind == ManiaEventKind.Hit)
                 {
-                    sfx.AddDesired(
-                        new ViewEvent<SfxEvent>
-                        {
-                            Event = new SfxEvent { Kind = SfxKind.ComboGood },
-                            StartFrame = realFrame,
-                            Hash = i,
-                        }
-                    );
-
-                    vfx.AddDesired(
-                        new ViewEvent<VfxEvent>
-                        {
-                            Event = new VfxEvent { Kind = VfxKind.NoteHit, Position = world },
-                            StartFrame = realFrame,
-                            Hash = i,
-                        }
-                    );
+                    sfx.AddDesired(SfxKind.ComboGood, realFrame, hash: i);
+                    vfx.AddDesired(VfxKind.NoteHit, realFrame, hash: i, position: world);
                 }
                 else if (maniaState.ManiaEvents[i].Kind == ManiaEventKind.Missed)
                 {
-                    sfx.AddDesired(
-                        new ViewEvent<SfxEvent>
-                        {
-                            Event = new SfxEvent { Kind = SfxKind.ComboMiss },
-                            StartFrame = realFrame,
-                            Hash = i,
-                        }
-                    );
-
-                    vfx.AddDesired(
-                        new ViewEvent<VfxEvent>
-                        {
-                            Event = new VfxEvent { Kind = VfxKind.NoteMiss, Position = world },
-                            StartFrame = realFrame,
-                            Hash = i,
-                        }
-                    );
+                    sfx.AddDesired(SfxKind.ComboMiss, realFrame, hash: i);
+                    vfx.AddDesired(VfxKind.NoteMiss, realFrame, hash: i, position: world);
                 }
             }
         }

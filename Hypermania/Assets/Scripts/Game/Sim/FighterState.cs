@@ -44,6 +44,8 @@ namespace Game.Sim
         public VictoryKind[] Victories;
         public int NumVictories;
         public bool GrabConnected;
+        public bool IsPoweredUp;
+        public int PoweredUpHitsRemaining;
 
         /// <summary>
         /// Set when this fighter is in hitstun while a mania is active. Keeps
@@ -86,6 +88,7 @@ namespace Game.Sim
         public BoxProps? HitProps { get; private set; }
         public SVector2? HitLocation { get; private set; }
         public bool StateChangedThisRealFrame { get; private set; }
+        public bool SuperMaxedThisRealFrame { get; private set; }
 
         public bool HitLastRealFrame =>
             HitProps.HasValue
@@ -151,6 +154,8 @@ namespace Game.Sim
                 Victories = new VictoryKind[lives],
                 NumVictories = 0,
                 LockedHitstun = false,
+                IsPoweredUp = false,
+                PoweredUpHitsRemaining = 0,
             };
             return state;
         }
@@ -168,6 +173,8 @@ namespace Game.Sim
             LockedHitstun = false;
             InputH.Clear(); // Clear, don't want to read input from a previous round.
             // TODO: character dependent?
+            IsPoweredUp = false;
+            PoweredUpHitsRemaining = 0;
             Burst = 0;
             Super = 0;
             AirDashCount = 0;
@@ -226,6 +233,7 @@ namespace Game.Sim
             HitProps = null;
             HitLocation = null;
             StateChangedThisRealFrame = false;
+            SuperMaxedThisRealFrame = false;
         }
 
         public void SetState(CharacterState nextState, Frame start, Frame end, bool forceChange = false)
@@ -493,15 +501,15 @@ namespace Game.Sim
             {
                 { (FighterAttackLocation.Standing, InputFlags.LightAttack), CharacterState.LightAttack },
                 { (FighterAttackLocation.Standing, InputFlags.MediumAttack), CharacterState.MediumAttack },
-                { (FighterAttackLocation.Standing, InputFlags.HeavyAttack), CharacterState.SuperAttack },
+                { (FighterAttackLocation.Standing, InputFlags.HeavyAttack), CharacterState.HeavyAttack },
                 { (FighterAttackLocation.Standing, InputFlags.SpecialAttack), CharacterState.SpecialAttack },
                 { (FighterAttackLocation.Crouching, InputFlags.LightAttack), CharacterState.LightCrouching },
                 { (FighterAttackLocation.Crouching, InputFlags.MediumAttack), CharacterState.MediumCrouching },
-                { (FighterAttackLocation.Crouching, InputFlags.HeavyAttack), CharacterState.SuperCrouching },
+                { (FighterAttackLocation.Crouching, InputFlags.HeavyAttack), CharacterState.HeavyCrouching },
                 { (FighterAttackLocation.Crouching, InputFlags.SpecialAttack), CharacterState.SpecialCrouching },
                 { (FighterAttackLocation.Aerial, InputFlags.LightAttack), CharacterState.LightAerial },
                 { (FighterAttackLocation.Aerial, InputFlags.MediumAttack), CharacterState.MediumAerial },
-                { (FighterAttackLocation.Aerial, InputFlags.HeavyAttack), CharacterState.SuperAerial },
+                { (FighterAttackLocation.Aerial, InputFlags.HeavyAttack), CharacterState.HeavyAerial },
                 { (FighterAttackLocation.Aerial, InputFlags.SpecialAttack), CharacterState.SpecialAerial },
                 { (FighterAttackLocation.Standing, InputFlags.Grab), CharacterState.Grab },
                 { (FighterAttackLocation.Crouching, InputFlags.Grab), CharacterState.Grab },
@@ -531,6 +539,19 @@ namespace Game.Sim
                 return;
             }
 
+            int bufferWindow = options.Global.Input.InputBufferWindow;
+
+            // Activate powered-up state on Super press (requires full meter, must be actionable)
+            if (Actionable
+                && InputH.PressedRecently(InputFlags.Super, bufferWindow)
+                && !IsPoweredUp
+                && Super >= options.Players[Index].Character.SuperMax)
+            {
+                IsPoweredUp = true;
+                PoweredUpHitsRemaining = options.Global.PoweredUpMaxHits;
+                Super = 0;
+            }
+
             bool dashCancelEligible =
                 (
                     (simFrame + options.Global.ForwardDashCancelAfterTicks >= StateEnd)
@@ -544,8 +565,6 @@ namespace Game.Sim
             {
                 return;
             }
-
-            int bufferWindow = options.Global.Input.InputBufferWindow;
 
             int[] frames = new int[HitboxData.ATTACK_FRAME_TYPE_ORDER.Length];
             foreach (((var loc, var input), var state) in _attackDictionary)
@@ -814,6 +833,15 @@ namespace Game.Sim
 
             Velocity = props.Knockback;
 
+            if (IsPoweredUp)
+            {
+                PoweredUpHitsRemaining--;
+                if (PoweredUpHitsRemaining <= 0)
+                {
+                    IsPoweredUp = false;
+                }
+            }
+
             ComboedCount++;
             return new HitOutcome { Kind = HitKind.Hit, Props = props };
         }
@@ -846,8 +874,14 @@ namespace Game.Sim
 
         public void AddSuper(sfloat amount, GameOptions options)
         {
+            sfloat max = options.Players[Index].Character.SuperMax;
+            bool wasBelowMax = Super < max;
             Super += amount;
-            Super = Mathsf.Min(Super, options.Players[Index].Character.SuperMax);
+            Super = Mathsf.Min(Super, max);
+            if (wasBelowMax && Super >= max)
+            {
+                SuperMaxedThisRealFrame = true;
+            }
         }
     }
 }

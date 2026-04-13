@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: be373a019aa534843a9f8df3be036a28, type: 3}
-  m_Name: SuperAttack
+  m_Name: HeavyAttack
   m_EditorClassIdentifier: 
   Clip: {fileID: 7400000, guid: 8856be4598d7694a5b1eec6e0da9fbfb, type: 2}
   Frames:
