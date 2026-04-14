@@ -28,6 +28,7 @@ namespace Design.Configs
         public Color LightColor;
         public Color AccentColor;
         public SpriteLibraryAsset SpriteLibrary;
+        public Texture2D Portrait;
     }
 
     [CreateAssetMenu(menuName = "Hypermania/Character Config")]

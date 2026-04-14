@@ -192,13 +192,14 @@ namespace Game.Sim
 
             ModeStart = Frame.NullFrame;
             HypeMeter = (sfloat)0.0f;
-            // Delay countdown start until the next music beat so the 1-2-1-2-3-4-Go beats
-            // line up with the song. SimFrame and RealFrame advance in lockstep during
-            // Countdown (SpeedRatio=1, no hitstop), so aligning RealFrame here keeps every
-            // subsequent beat transition on-beat.
+            // Delay countdown start until the next whole-note (measure downbeat) so the
+            // 1-2-1-2-3-4-Go sequence always begins on beat 1 of a 4/4 bar. SimFrame and
+            // RealFrame advance in lockstep during Countdown (SpeedRatio=1, no hitstop),
+            // so aligning RealFrame here keeps every subsequent beat transition on-beat.
             var audio = options.Global.Audio;
-            int phase = ((RealFrame.No - audio.FirstMusicalBeat.No) % audio.FramesPerBeat + audio.FramesPerBeat) % audio.FramesPerBeat;
-            int delay = (audio.FramesPerBeat - phase) % audio.FramesPerBeat;
+            int framesPerWholeNote = audio.FramesPerBeat * 4;
+            int phase = ((RealFrame.No - audio.FirstMusicalBeat.No) % framesPerWholeNote + framesPerWholeNote) % framesPerWholeNote;
+            int delay = (framesPerWholeNote - phase) % framesPerWholeNote;
             RoundStart = SimFrame + delay;
             SpeedRatio = 1;
             GameMode = GameMode.Countdown;
