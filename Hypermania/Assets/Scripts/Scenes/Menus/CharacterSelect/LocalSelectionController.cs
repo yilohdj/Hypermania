@@ -14,7 +14,7 @@ namespace Scenes.Menus.CharacterSelect
     /// </summary>
     public class LocalSelectionController
     {
-        private const float AxisThreshold = 0.5f;
+        private const float AxisThreshold = 0.75f;
 
         private readonly InputDevice _device;
         private bool _prevLeft;
@@ -91,6 +91,16 @@ namespace Scenes.Menus.CharacterSelect
                 state.OptionsRow = 0;
                 ClampSkin(state, ctx);
                 ClampControls(state, ctx);
+                // Both slots in Character phase don't block each other, so
+                // they can share a (char, skin). If the other slot already
+                // confirmed onto our skin while we were sitting on it, bump
+                // off so we never enter Options on a colliding slot.
+                if (state.CharacterIndex < ctx.CharacterCount && ctx.IsTaken(state.CharacterIndex, state.SkinIndex))
+                {
+                    int free = FirstFreeSkin(state.CharacterIndex, ctx);
+                    if (free >= 0)
+                        state.SkinIndex = free;
+                }
             }
         }
 
@@ -281,8 +291,16 @@ namespace Scenes.Menus.CharacterSelect
             bool leftStickUp = gp.leftStick.y.value > AxisThreshold;
             bool leftStickDown = gp.leftStick.y.value < -AxisThreshold;
 
-            left = gp.dpad.left.wasPressedThisFrame || (leftStickLeft && !_prevLeft);
-            right = gp.dpad.right.wasPressedThisFrame || (leftStickRight && !_prevRight);
+            left =
+                gp.dpad.left.wasPressedThisFrame
+                || gp.leftShoulder.wasPressedThisFrame
+                || gp.leftTrigger.wasPressedThisFrame
+                || (leftStickLeft && !_prevLeft);
+            right =
+                gp.dpad.right.wasPressedThisFrame
+                || gp.rightShoulder.wasPressedThisFrame
+                || gp.rightTrigger.wasPressedThisFrame
+                || (leftStickRight && !_prevRight);
             up = gp.dpad.up.wasPressedThisFrame || (leftStickUp && !_prevUp);
             down = gp.dpad.down.wasPressedThisFrame || (leftStickDown && !_prevDown);
 

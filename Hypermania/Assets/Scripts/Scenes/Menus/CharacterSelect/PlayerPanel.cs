@@ -112,14 +112,18 @@ namespace Scenes.Menus.CharacterSelect
             if (_state == null || _roster == null || _roster.Length == 0)
                 return;
 
-            if (_state.Phase != _lastPhase)
+            bool phaseChanged = _state.Phase != _lastPhase;
+            if (phaseChanged)
             {
                 if (_animator != null)
                     _animator.SetInteger(PhaseParam, (int)_state.Phase);
                 _lastPhase = _state.Phase;
             }
 
-            if (_state.CharacterIndex != _lastCharIndex || _state.SkinIndex != _lastSkinIndex)
+            // Phase changes can flip the splash between the default skin
+            // (Character phase) and the actual SkinIndex (Options/Confirmed),
+            // so re-render whenever phase transitions.
+            if (phaseChanged || _state.CharacterIndex != _lastCharIndex || _state.SkinIndex != _lastSkinIndex)
             {
                 ApplyCharacterPreview();
                 _lastCharIndex = _state.CharacterIndex;
@@ -197,7 +201,11 @@ namespace Scenes.Menus.CharacterSelect
             bool hasSkin = config.Skins != null && config.Skins.Length > 0;
             if (hasSkin)
             {
-                int skinIdx = Mathf.Clamp(_state.SkinIndex, 0, config.Skins.Length - 1);
+                // While still browsing the grid, show the default skin (index 0)
+                // regardless of SkinIndex — the player hasn't picked a skin yet.
+                int skinIdx = _state.Phase == SelectPhase.Character
+                    ? 0
+                    : Mathf.Clamp(_state.SkinIndex, 0, config.Skins.Length - 1);
                 skin = config.Skins[skinIdx];
             }
 

@@ -383,13 +383,18 @@ namespace Scenes.Menus.CharacterSelect
             CharacterConfig selected = GetSelectedCharacter(slot.CharacterIndex);
             int skinCount = selected != null && selected.Skins != null ? selected.Skins.Length : 0;
             bool isLocal = _isOnline ? (slotIndex == _onlineLocalPlayerIndex) : true;
+            // Treat the other slot as not blocking anything while it's still
+            // browsing the character grid — IsTaken short-circuits on
+            // OtherCharacter < 0, so this propagates to FirstFreeSkin during
+            // character nav and to CycleRow's skin-skip in Options.
+            int otherCharacterIdx = otherSlot.Phase == SelectPhase.Character ? -1 : otherSlot.CharacterIndex;
             SelectionContext ctx = new SelectionContext(
                 characterCount: _roster != null ? _roster.Length : 0,
                 controlsPresetCount: _controlsPresets != null ? _controlsPresets.Length : 0,
                 skinCount: skinCount,
                 isRowInteractable: row =>
                     OptionsRows.IsInteractable(slot, isLocal, row, _roster != null ? _roster.Length : int.MaxValue),
-                otherCharacter: otherSlot.CharacterIndex,
+                otherCharacter: otherCharacterIdx,
                 otherSkin: otherSlot.SkinIndex,
                 skinCountForChar: SkinCountForChar,
                 hasRandomSlot: _grid != null && _grid.HasRandomSlot

@@ -123,10 +123,13 @@ namespace Scenes.Menus.CharacterSelect
 
         private void RefreshTakenState(int charIdx)
         {
-            // Same rule as LocalSelectionController.SelectionContext.IsTaken:
-            // an icon is "taken" when the other player is on the same character
-            // and has locked in that skin index.
-            bool otherOnSameChar = _otherState != null && _otherState.CharacterIndex == charIdx;
+            // An icon is "taken" only when the other player is on the same
+            // character AND has progressed past Character phase. Mirrors the
+            // OtherCharacter = -1 guard in CharacterSelectDirectory.ApplyEdgesToSlot
+            // — a player still browsing the grid hasn't actually claimed a skin.
+            bool otherOnSameChar = _otherState != null
+                && _otherState.Phase != SelectPhase.Character
+                && _otherState.CharacterIndex == charIdx;
             int takenIdx = otherOnSameChar ? _otherState.SkinIndex : -1;
             for (int i = 0; i < _icons.Count; i++)
             {

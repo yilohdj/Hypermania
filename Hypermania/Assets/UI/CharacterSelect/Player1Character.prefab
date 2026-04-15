@@ -1429,6 +1429,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4949562563578202292, guid: 8d120bd62f9044454a2e83c1bd5ec66c, type: 3}
+      propertyPath: m_Color.b
+      value: 0.627451
+      objectReference: {fileID: 0}
+    - target: {fileID: 4949562563578202292, guid: 8d120bd62f9044454a2e83c1bd5ec66c, type: 3}
+      propertyPath: m_Color.g
+      value: 0.26666668
+      objectReference: {fileID: 0}
+    - target: {fileID: 4949562563578202292, guid: 8d120bd62f9044454a2e83c1bd5ec66c, type: 3}
+      propertyPath: m_Color.r
+      value: 0.33333334
+      objectReference: {fileID: 0}
     - target: {fileID: 8560747984978248146, guid: 8d120bd62f9044454a2e83c1bd5ec66c, type: 3}
       propertyPath: m_Name
       value: PlayerSkin
