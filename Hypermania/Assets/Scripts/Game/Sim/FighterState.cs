@@ -545,7 +545,8 @@ namespace Game.Sim
             GameOptions options,
             CharacterConfig config,
             bool isRhythmCancel,
-            int beatOffset
+            int beatOffset,
+            GameMode gameMode
         )
         {
             if (State == CharacterState.Hit)
@@ -576,7 +577,9 @@ namespace Game.Sim
                 && InputH.PressedRecently(InputFlags.HeavyAttack, bufferWindow)
                 && simFrame - StateStart > bufferWindow
                 && simFrame - StateStart <= superWindow
-                && Super >= options.Players[Index].Character.SuperMax)
+                && Super >= options.Players[Index].Character.SuperMax
+                && gameMode == GameMode.Fighting
+                )
             {
                 IsSuperAttack = true;
                 Super = 0;

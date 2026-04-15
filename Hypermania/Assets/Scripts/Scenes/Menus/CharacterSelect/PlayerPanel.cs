@@ -27,6 +27,25 @@ namespace Scenes.Menus.CharacterSelect
         [SerializeField]
         private TMP_Text _characterName;
 
+        [Header("Preview pulse (while slot is in Character phase)")]
+        [SerializeField]
+        [Tooltip("Transform scaled between 1 and _previewPulseMaxScale while the player is still hovering (Character phase).")]
+        private RectTransform _previewPulseTarget;
+
+        [SerializeField]
+        [Tooltip("CanvasGroup whose alpha oscillates between _previewPulseMinAlpha and 1 while the player is still hovering.")]
+        private CanvasGroup _previewPulseGroup;
+
+        [SerializeField]
+        private float _previewPulseSpeed = 3f;
+
+        [SerializeField]
+        [Range(0f, 1f)]
+        private float _previewPulseMinAlpha = 0.7f;
+
+        [SerializeField]
+        private float _previewPulseMaxScale = 1.05f;
+
         [SerializeField]
         private Image[] _mainImages;
 
@@ -45,6 +64,10 @@ namespace Scenes.Menus.CharacterSelect
 
         [SerializeField]
         private FadeToggle _confirmedBanner;
+
+        [Header("Shared fighter stage (both panels point at the same stage component)")]
+        [SerializeField]
+        private CharacterFighterStage _fighterStage;
 
         private PlayerSelectionState _state;
         private CharacterConfig[] _roster;
@@ -108,6 +131,63 @@ namespace Scenes.Menus.CharacterSelect
                 _lastCharIndex = _state.CharacterIndex;
                 _lastSkinIndex = _state.SkinIndex;
             }
+
+            ApplyPreviewPulse();
+            ApplyFighterPreview();
+        }
+
+        /// <summary>
+        /// Publish this panel's desired fighter state to the shared stage
+        /// each frame. The stage is idempotent, so we don't cache anything
+        /// here — the slot state on the stage is driven purely by
+        /// <see cref="PlayerSelectionState"/>.
+        /// </summary>
+        private void ApplyFighterPreview()
+        {
+            if (_fighterStage == null)
+                return;
+
+            bool onRandom = _state.CharacterIndex >= _roster.Length;
+            bool visible = !onRandom && _state.Phase != SelectPhase.Character;
+            CharacterConfig config = visible
+                ? _roster[Mathf.Clamp(_state.CharacterIndex, 0, _roster.Length - 1)]
+                : null;
+
+            _fighterStage.Render(_playerIndex, config, _state.SkinIndex, visible);
+        }
+
+        /// <summary>
+        /// While the slot is still in the Character phase (player hasn't
+        /// locked in), pulse the preview's alpha and scale so it reads as
+        /// "still hovering." Once the player confirms out of Character,
+        /// snap both back to their rest values.
+        /// </summary>
+        private void ApplyPreviewPulse()
+        {
+            bool pulsing = _state.Phase == SelectPhase.Character;
+            float alpha;
+            float scale;
+            if (pulsing)
+            {
+                // Map a sine wave to [0, 1] so scale stays at or above 1
+                // and alpha stays above the floor. Alpha is inverted
+                // against scale so the preview is most transparent at the
+                // peak of the pulse (most "zoomed out") and fully opaque
+                // at rest scale.
+                float t = Mathf.Sin(Time.time * _previewPulseSpeed) * 0.5f + 0.5f;
+                scale = Mathf.Lerp(1f, _previewPulseMaxScale, t);
+                alpha = Mathf.Lerp(1f, _previewPulseMinAlpha, t);
+            }
+            else
+            {
+                alpha = 1f;
+                scale = 1f;
+            }
+
+            if (_previewPulseGroup != null)
+                _previewPulseGroup.alpha = alpha;
+            if (_previewPulseTarget != null)
+                _previewPulseTarget.localScale = new Vector3(scale, scale, 1f);
         }
 
         private void ApplyPhaseVisibility(SelectPhase phase)

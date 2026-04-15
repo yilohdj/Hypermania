@@ -99,5 +99,18 @@ namespace Game.View.Fighters
             _oldController = null;
             _characterConfig = null;
         }
+
+        /// <summary>
+        /// Swaps the sprite library without re-binding the animator
+        /// controller. Safe to call every frame when cycling skins.
+        /// </summary>
+        public void SetSkin(int skinIndex)
+        {
+            if (_characterConfig == null)
+                return;
+            if (skinIndex < 0 || skinIndex >= _characterConfig.Skins.Length)
+                throw new ArgumentOutOfRangeException(nameof(skinIndex));
+            _spriteLibrary.spriteLibraryAsset = _characterConfig.Skins[skinIndex].SpriteLibrary;
+        }
     }
 }

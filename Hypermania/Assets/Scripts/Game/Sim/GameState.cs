@@ -375,7 +375,8 @@ namespace Game.Sim
                         options,
                         options.Players[i].Character,
                         rhythmCancel.shouldRhythmCancel,
-                        rhythmCancel.beatOffset
+                        rhythmCancel.beatOffset,
+                        GameMode
                     );
             }
 
