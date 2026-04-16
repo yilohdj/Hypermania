@@ -45,6 +45,7 @@ namespace Game.Sim
         public int NumVictories;
         public bool GrabConnected;
         public bool IsSuperAttack;
+        public int SuperComboBeats;
 
         /// <summary>
         /// Set when this fighter is in hitstun while a mania is active. Keeps
@@ -217,7 +218,7 @@ namespace Game.Sim
                 }
                 if (options.Players[Index].SuperMaxOnActionable)
                 {
-                    Super = options.Players[Index].Character.SuperMax;
+                    Super = options.Global.SuperMax;
                 }
                 if (options.Players[Index].BurstMaxOnActionable)
                 {
@@ -583,12 +584,22 @@ namespace Game.Sim
                 && InputH.PressedRecently(InputFlags.HeavyAttack, bufferWindow)
                 && simFrame - StateStart > bufferWindow
                 && simFrame - StateStart <= superWindow
-                && Super >= options.Players[Index].Character.SuperMax
                 && gameMode == GameMode.Fighting
             )
             {
-                IsSuperAttack = true;
-                Super = 0;
+                sfloat superCost = options.Global.SuperCost;
+                if (Super >= superCost + superCost)
+                {
+                    IsSuperAttack = true;
+                    Super -= superCost + superCost;
+                    SuperComboBeats = options.Global.SuperTier2Beats;
+                }
+                else if (Super >= superCost)
+                {
+                    IsSuperAttack = true;
+                    Super -= superCost;
+                    SuperComboBeats = options.Global.SuperTier1Beats;
+                }
             }
 
             bool dashCancelEligible =
@@ -902,11 +913,15 @@ namespace Game.Sim
 
         public void AddSuper(sfloat amount, GameOptions options)
         {
-            sfloat max = options.Players[Index].Character.SuperMax;
-            bool wasBelowMax = Super < max;
+            sfloat max = options.Global.SuperMax;
+            sfloat cost = options.Global.SuperCost;
+            sfloat doubleCost = cost + cost;
+            sfloat prevSuper = Super;
             Super += amount;
             Super = Mathsf.Min(Super, max);
-            if (wasBelowMax && Super >= max)
+            bool crossedTier1 = prevSuper < cost && Super >= cost;
+            bool crossedTier2 = prevSuper < doubleCost && Super >= doubleCost;
+            if (crossedTier1 || crossedTier2)
             {
                 SuperMaxedThisRealFrame = true;
             }

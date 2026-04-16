@@ -19,6 +19,11 @@ MonoBehaviour:
   - MainColor: {r: 0.32156864, g: 0.6509804, b: 0.41960788, a: 1}
     LightColor: {r: 0.73333335, g: 0.8235295, b: 0.6039216, a: 1}
     AccentColor: {r: 0.6117647, g: 0.8235295, b: 0.09019608, a: 1}
+    HypeBarColors:
+    - {r: 0.73744196, g: 0.8235294, b: 0.5254118, a: 1}
+    - {r: 0.7635409, g: 0.88699996, b: 0.45946598, a: 1}
+    - {r: 0.6504735, g: 0.851, b: 0.15658401, a: 1}
+    - {r: 0.5049953, g: 0.709, b: 0, a: 1}
     SpriteLibrary: {fileID: 7108339969198208228, guid: 310dc92627b48b44fadb2a6a8146ee08, type: 3}
     Portrait: {fileID: 2800000, guid: 9e588d52a7abc7049b36c2d5fcf9177f, type: 3}
     Splash: {fileID: 2800000, guid: 9e588d52a7abc7049b36c2d5fcf9177f, type: 3}
@@ -33,8 +38,6 @@ MonoBehaviour:
     rawValue: 1089470464
   Health:
     rawValue: 1132068864
-  SuperMax:
-    rawValue: 1120403456
   BurstMax:
     rawValue: 1112014848
   ForwardDashDistance:

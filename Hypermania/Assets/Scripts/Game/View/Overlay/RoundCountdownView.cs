@@ -42,12 +42,7 @@ namespace Game.View.Overlay
             }
 
             int beatIndex;
-            if (elapsed >= totalCountdown)
-            {
-                beatIndex = 6;
-                _animator.SetInteger(CountParam, 4);
-            }
-            else if (elapsed < audio.BeatsToFrame(2))
+            if (elapsed < audio.BeatsToFrame(2))
             {
                 beatIndex = 0;
                 _animator.SetInteger(CountParam, 1);

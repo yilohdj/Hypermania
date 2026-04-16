@@ -41,6 +41,10 @@ namespace Design.Configs
         public sfloat MaxHype = 100;
         public sfloat HypeMovementFactor = (sfloat)0.3f;
         public sfloat PassiveSuperGain = (sfloat)5f;
+        public sfloat SuperMax = (sfloat)400f;
+        public sfloat SuperCost = (sfloat)100f;
+        public int SuperTier1Beats = 8;
+        public int SuperTier2Beats = 16;
         public sfloat CameraHalfHeight = (sfloat)1.5f;
         public sfloat CameraPadding = (sfloat)0.3f;
         public int RoundEndTicks = 120;

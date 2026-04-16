@@ -27,6 +27,7 @@ namespace Design.Configs
         public Color MainColor;
         public Color LightColor;
         public Color AccentColor;
+        public Color[] HypeBarColors;
         public SpriteLibraryAsset SpriteLibrary;
         public Texture2D Portrait;
         public Texture2D Splash;
@@ -45,7 +46,6 @@ namespace Design.Configs
         public sfloat BackSpeed;
         public sfloat JumpVelocity;
         public sfloat Health;
-        public sfloat SuperMax;
         public sfloat BurstMax;
         public sfloat ForwardDashDistance;
         public sfloat BackDashDistance;

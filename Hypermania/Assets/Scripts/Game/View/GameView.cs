@@ -25,7 +25,7 @@ namespace Game.View
         public struct PlayerParams
         {
             public AnimatedBarView BurstBarView;
-            public AnimatedBarView SuperBarView;
+            public SuperBarView SuperBarView;
             public HealthBarView HealthBarView;
             public ManiaView ManiaView;
             public ComboCountView ComboCountView;
@@ -98,7 +98,10 @@ namespace Game.View
                 _playerParams[i].HealthBarView.Init(config, options.Players[i].SkinIndex);
                 _playerParams[i].HealthBarView.SetMaxHealth((float)config.Health);
                 _playerParams[i].BurstBarView.SetMaxValue((float)config.BurstMax);
-                _playerParams[i].SuperBarView.SetMaxValue((float)config.SuperMax);
+                _playerParams[i].SuperBarView.Init(
+                    (float)options.Global.SuperMax,
+                    (float)options.Global.SuperCost
+                );
                 _playerParams[i]
                     .SuperDisplayView.Init(
                         config,
@@ -109,7 +112,11 @@ namespace Game.View
 
             _projectileViews = new ProjectileView[GameState.MAX_PROJECTILES];
 
-            _params.HypeBarView.SetMaxHype((float)options.Global.MaxHype);
+            _params.HypeBarView.Init(
+                (float)options.Global.MaxHype,
+                options.Players[0].Character.Skins[options.Players[0].SkinIndex],
+                options.Players[1].Character.Skins[options.Players[1].SkinIndex]
+            );
             _conductor.Init(options);
             _conductor.SetFrame(Frame.FirstFrame);
             _rollbackStart = Frame.NullFrame;
@@ -183,7 +190,7 @@ namespace Game.View
             {
                 _playerParams[i].HealthBarView.SetHealth((int)state.Fighters[i].Health);
                 _playerParams[i].BurstBarView.SetValue((int)state.Fighters[i].Burst);
-                _playerParams[i].SuperBarView.SetValue((int)state.Fighters[i].Super);
+                _playerParams[i].SuperBarView.SetValue((float)state.Fighters[i].Super);
                 _playerParams[i].VictoryMarkView.SetVictories(state.Fighters[i].Victories, (i == 0 ? -1 : 1));
             }
 

@@ -16,7 +16,8 @@ namespace Game.Sim
             GameOptions options,
             CharacterConfig characterConfig,
             GameState gameState,
-            int attackerIndex
+            int attackerIndex,
+            int comboBeatCount
         )
         {
             // Hitstop bridges slow-mo end to the nearest beat boundary,
@@ -34,7 +35,7 @@ namespace Game.Sim
 
             int hitstop = nextBeat - earliestStart;
 
-            Frame[] noteFrames = options.Global.Audio.SliceFrom(earliestStart);
+            Frame[] noteFrames = options.Global.Audio.SliceFrom(earliestStart, comboBeatCount);
 
             if (noteFrames.Length == 0)
             {

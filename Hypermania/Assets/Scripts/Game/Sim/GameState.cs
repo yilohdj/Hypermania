@@ -519,7 +519,9 @@ namespace Game.Sim
             {
                 int attackerIndex = PendingRhythmComboAttacker;
                 PendingRhythmComboAttacker = -1;
+                int comboBeats = Fighters[attackerIndex].SuperComboBeats;
                 Fighters[attackerIndex].IsSuperAttack = false;
+                Fighters[attackerIndex].SuperComboBeats = 0;
                 HitstopFramesRemaining = ComboManager.StartRhythmCombo(
                     RealFrame,
                     ref Manias[attackerIndex],
@@ -527,7 +529,8 @@ namespace Game.Sim
                     options,
                     options.Players[attackerIndex].Character,
                     this,
-                    attackerIndex
+                    attackerIndex,
+                    comboBeats
                 );
             }
         }
