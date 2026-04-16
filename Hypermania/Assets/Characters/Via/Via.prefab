@@ -467,7 +467,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 20
-  m_Sprite: {fileID: 2173101304377637026, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -475,7 +475,7 @@ SpriteRenderer:
   m_Size: {x: 0.13235295, y: 0.10941176}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &6442220921505170926
@@ -511,7 +511,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 1.5671863e-12
-  m_labelHash: 1.0997668e-38
+  m_labelHash: 6.890074e-20
   m_SpriteKey: 0
   m_SpriteHash: 87444397
 --- !u!114 &3834968566541119595
@@ -1291,7 +1291,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 21
-  m_Sprite: {fileID: -8505705457702495376, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1299,7 +1299,7 @@ SpriteRenderer:
   m_Size: {x: 0.10705882, y: 0.052352943}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &2809586192042702762
@@ -1336,7 +1336,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 3.5468788e-34
-  m_labelHash: 2.0515593e-33
+  m_labelHash: 6.890074e-20
   m_SpriteKey: 0
   m_SpriteHash: 481640080
 --- !u!114 &2123877354581770833
@@ -1575,7 +1575,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 22
-  m_Sprite: {fileID: 8025596684484294011, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: 4347773022915797978, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1621,7 +1621,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 9.3858616e-30
-  m_labelHash: 0.0000000017498831
+  m_labelHash: 0.001264327
   m_SpriteKey: 0
   m_SpriteHash: 565322640
 --- !u!114 &4759287604271722911
@@ -4015,7 +4015,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 23
-  m_Sprite: {fileID: -5997011278550198172, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: 638058010538535523, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -4061,7 +4061,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 3.7509393e-20
-  m_labelHash: 2.8361683e-27
+  m_labelHash: 3.6110543e-13
   m_SpriteKey: 0
   m_SpriteHash: 557457488
 --- !u!114 &2627175780933264240
@@ -4221,7 +4221,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 2
-  m_Sprite: {fileID: 1210300393597473757, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: 8404878505331866262, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -4272,7 +4272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 3.1049663e-15
-  m_labelHash: 3.9378344e-34
+  m_labelHash: 1.07034704e-32
   m_SpriteKey: 0
   m_SpriteHash: 198627765
 --- !u!114 &2593226221903785033
@@ -4368,7 +4368,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 19
-  m_Sprite: {fileID: 8574065012187166129, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: 8030112380916233131, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -4395,7 +4395,6 @@ MonoBehaviour:
   m_BoneTransforms:
   - {fileID: 8713095135489755756}
   - {fileID: 501705183718757955}
-  - {fileID: 438461170929678952}
   m_Bounds:
     m_Center: {x: 1.8196875, y: 23.623337, z: 0}
     m_Extent: {x: 1.2329309, y: 1.0066595, z: 0}
@@ -4414,7 +4413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 3.4790622e-31
-  m_labelHash: 0.000000017479108
+  m_labelHash: 3.890599e-23
   m_SpriteKey: 0
   m_SpriteHash: 692027409
 --- !u!114 &3113629937799329616
