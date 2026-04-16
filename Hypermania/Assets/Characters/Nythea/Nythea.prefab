@@ -7154,6 +7154,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dustEmitterLocation: {fileID: 846622067029415103}
+  _hitJitterMagnitude: 0.03
 --- !u!114 &3444752299832716971
 MonoBehaviour:
   m_ObjectHideFlags: 0

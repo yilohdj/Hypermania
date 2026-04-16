@@ -856,6 +856,8 @@ namespace Game.Sim
                     true
                 );
 
+                Velocity = new SVector2(props.Knockback.x * (sfloat)0.5f, sfloat.Zero);
+
                 // TODO: check if other move is special, if so apply chip
                 return new HitOutcome { Kind = HitKind.Blocked };
             }

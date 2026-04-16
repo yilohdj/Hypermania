@@ -22,6 +22,9 @@ namespace Game.View.Fighters
         [SerializeField]
         private Transform _dustEmitterLocation;
 
+        [SerializeField]
+        private float _hitJitterMagnitude = 0.04f;
+
         public virtual void Init(CharacterConfig characterConfig, int skinIndex)
         {
             if (skinIndex < 0 || skinIndex >= characterConfig.Skins.Length)
@@ -38,11 +41,18 @@ namespace Game.View.Fighters
             _spriteLibrary.spriteLibraryAsset = characterConfig.Skins[skinIndex].SpriteLibrary;
         }
 
-        public virtual void Render(Frame frame, in FighterState state)
+        public virtual void Render(Frame frame, in FighterState state, int hitstopRemaining)
         {
             Vector3 pos = transform.position;
             pos.x = (float)state.Position.x;
             pos.y = (float)state.Position.y;
+
+            if (hitstopRemaining > 0 && IsHitRecipient(state.State))
+            {
+                Vector2 jitter = UnityEngine.Random.insideUnitCircle * _hitJitterMagnitude;
+                pos.x += jitter.x;
+                pos.y += jitter.y;
+            }
 
             transform.position = pos;
             transform.localScale = new Vector3(state.FacingDir == FighterFacing.Left ? -1 : 1, 1f, 1f);
@@ -98,6 +108,9 @@ namespace Game.View.Fighters
                 );
             }
         }
+
+        private static bool IsHitRecipient(CharacterState s) =>
+            s == CharacterState.Hit || s == CharacterState.Knockdown || s == CharacterState.Death;
 
         public void DeInit()
         {

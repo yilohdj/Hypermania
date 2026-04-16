@@ -9,9 +9,9 @@ namespace Game.View.Fighters
     [RequireComponent(typeof(SpriteLibrary))]
     public class ViaView : FighterView
     {
-        public override void Render(Frame frame, in FighterState state)
+        public override void Render(Frame frame, in FighterState state, int hitstopRemaining)
         {
-            base.Render(frame, state);
+            base.Render(frame, state, hitstopRemaining);
         }
     }
 }

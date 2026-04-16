@@ -127,7 +127,7 @@ namespace Game.View
             bool maniasEnabled = false;
             for (int i = 0; i < _options.Players.Length; i++)
             {
-                _fighters[i].Render(state.SimFrame, state.Fighters[i]);
+                _fighters[i].Render(state.SimFrame, state.Fighters[i], state.HitstopFramesRemaining);
                 _playerParams[i].ManiaView.Render(state.RealFrame, state.Manias[i]);
 
                 maniasEnabled |= state.Manias[i].Enabled(state.RealFrame);
@@ -193,7 +193,7 @@ namespace Game.View
                 _playerParams[i].VictoryMarkView.SetVictories(state.Fighters[i].Victories, (i == 0 ? -1 : 1));
             }
 
-            _params.CameraControl.UpdateCamera(interestPoints);
+            _params.CameraControl.UpdateCamera(interestPoints, state.GameMode);
             _params.FighterIndicatorManager.Track(state.Fighters);
 
             for (int i = 0; i < _options.Players.Length; i++)
