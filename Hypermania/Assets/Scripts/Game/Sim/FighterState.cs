@@ -66,20 +66,6 @@ namespace Game.Sim
         /// </summary>
         public Frame StateEnd { get; private set; }
 
-        /// <summary>
-        /// Last frame of the note input window for the note that triggered
-        /// the current state's rhythm cancel (i.e.
-        /// `noteTick + BeatCancelWindow`). Used to decouple combo mechanics
-        /// from where inside the input window the player actually hit the
-        /// note: regardless of how early or late the press lands, the
-        /// state's frame-data effects and hit/hurt/pushboxes don't come
-        /// online until this frame, so two different presses on the same
-        /// note produce identical combo behaviour.
-        /// <see cref="Frame.NullFrame"/> when the current state was not
-        /// rhythm canceled.
-        /// </summary>
-        public Frame RhythmCancelInputEnd { get; private set; }
-
         public int ImmunityHash { get; private set; }
 
         public FighterFacing FacingDir;
@@ -141,7 +127,6 @@ namespace Game.Sim
                 State = CharacterState.Idle,
                 StateStart = Frame.FirstFrame,
                 StateEnd = Frame.Infinity,
-                RhythmCancelInputEnd = Frame.NullFrame,
                 ImmunityHash = 0,
                 ComboedCount = 0,
                 InputH = new InputHistory(),
@@ -174,7 +159,6 @@ namespace Game.Sim
                 State = animState,
                 StateStart = stateStart,
                 StateEnd = Frame.Infinity,
-                RhythmCancelInputEnd = Frame.NullFrame,
             };
         }
 
@@ -185,7 +169,6 @@ namespace Game.Sim
             State = CharacterState.Idle;
             StateStart = Frame.FirstFrame;
             StateEnd = Frame.Infinity;
-            RhythmCancelInputEnd = Frame.NullFrame;
             ImmunityHash = 0;
             ComboedCount = 0;
             LockedHitstun = false;
@@ -268,10 +251,6 @@ namespace Game.Sim
                 State = nextState;
                 StateStart = start;
                 StateEnd = end;
-                // Clear any prior rhythm-cancel input window. Callers that
-                // entered this state under rhythm cancel reassign
-                // RhythmCancelInputEnd immediately after SetState.
-                RhythmCancelInputEnd = Frame.NullFrame;
                 StateChangedThisRealFrame = true;
             }
         }
@@ -348,7 +327,7 @@ namespace Game.Sim
             }
         }
 
-        public void ApplyMovementState(Frame frame, GameOptions options, bool isRhythmCancel, int beatOffset)
+        public void ApplyMovementState(Frame frame, GameOptions options, bool isRhythmCancel)
         {
             CharacterConfig config = options.Players[Index].Character;
             sfloat runMult = State == CharacterState.Running ? options.Global.RunningSpeedMultiplier : (sfloat)1f;
@@ -360,25 +339,13 @@ namespace Game.Sim
 
             if (gatlingPreJumpAllowed)
             {
-                TriggerPreJump(frame, options, isRhythmCancel, beatOffset, runMult);
+                TriggerPreJump(frame, options, isRhythmCancel, runMult);
                 return;
             }
 
             if (!Actionable && !isRhythmCancel)
             {
                 return;
-            }
-
-            Frame startFrame = frame;
-            // Absolute frame of the end of the note's input window
-            // (`noteTick + BeatCancelWindow`). A rhythm-canceled state
-            // records this so its mechanics all unfold from this single
-            // point, making the resulting combo independent of where in the
-            // input window the player actually pressed.
-            Frame rhythmCancelInputEnd = frame + (-beatOffset + (int)options.Players[Index].BeatCancelWindow);
-            if (isRhythmCancel)
-            {
-                startFrame = rhythmCancelInputEnd;
             }
 
             bool DashInputs(InputFlags dirInput, ref FighterState self) =>
@@ -395,7 +362,7 @@ namespace Game.Sim
             {
                 if (InputH.IsHeld(InputFlags.Up))
                 {
-                    TriggerPreJump(frame, options, isRhythmCancel, beatOffset, runMult);
+                    TriggerPreJump(frame, options, isRhythmCancel, runMult);
                     return;
                 }
 
@@ -430,25 +397,13 @@ namespace Game.Sim
 
                 if (DashInputs(ForwardInput, ref this))
                 {
-                    Velocity.x = ForwardVector.x * (config.ForwardDashDistance / options.Global.ForwardDashTicks);
-
-                    SetState(CharacterState.ForwardDash, startFrame, startFrame + options.Global.ForwardDashTicks);
-                    if (isRhythmCancel)
-                    {
-                        RhythmCancelInputEnd = rhythmCancelInputEnd;
-                    }
+                    SetState(CharacterState.ForwardDash, frame, frame + options.Global.ForwardDashTicks);
                     return;
                 }
 
                 if (DashInputs(BackwardInput, ref this))
                 {
-                    Velocity.x = BackwardVector.x * config.BackDashDistance / options.Global.BackDashTicks;
-
-                    SetState(CharacterState.BackDash, startFrame, startFrame + options.Global.BackDashTicks);
-                    if (isRhythmCancel)
-                    {
-                        RhythmCancelInputEnd = rhythmCancelInputEnd;
-                    }
+                    SetState(CharacterState.BackDash, frame, frame + options.Global.BackDashTicks);
                     return;
                 }
             }
@@ -466,32 +421,18 @@ namespace Game.Sim
                 if (DashInputs(ForwardInput, ref this) && AirDashCount < config.NumAirDashes)
                 {
                     AirDashCount += 1;
-                    Velocity.x = ForwardVector.x * (config.ForwardAirDashDistance / options.Global.ForwardAirDashTicks);
-                    Velocity.y = 0;
-
                     SetState(
                         CharacterState.ForwardAirDash,
-                        startFrame,
-                        startFrame + options.Global.ForwardAirDashTicks
+                        frame,
+                        frame + options.Global.ForwardAirDashTicks
                     );
-                    if (isRhythmCancel)
-                    {
-                        RhythmCancelInputEnd = rhythmCancelInputEnd;
-                    }
                     return;
                 }
 
                 if (DashInputs(BackwardInput, ref this) && AirDashCount < config.NumAirDashes)
                 {
                     AirDashCount += 1;
-                    Velocity.x = BackwardVector.x * (config.BackAirDashDistance / options.Global.BackAirDashTicks);
-                    Velocity.y = 0;
-
-                    SetState(CharacterState.BackAirDash, startFrame, startFrame + options.Global.BackAirDashTicks);
-                    if (isRhythmCancel)
-                    {
-                        RhythmCancelInputEnd = rhythmCancelInputEnd;
-                    }
+                    SetState(CharacterState.BackAirDash, frame, frame + options.Global.BackAirDashTicks);
                     return;
                 }
             }
@@ -501,7 +442,6 @@ namespace Game.Sim
             Frame frame,
             GameOptions options,
             bool isRhythmCancel,
-            int beatOffset,
             sfloat runMult
         )
         {
@@ -530,23 +470,22 @@ namespace Game.Sim
             }
 
             Velocity = SVector2.zero;
-            Frame endFrame = frame + config.GetHitboxData(CharacterState.PreJump).TotalTicks;
-            if (isRhythmCancel)
-            {
-                endFrame = frame - beatOffset + (int)options.Players[Index].BeatCancelWindow;
-            }
-
             AttackConnected = false;
-            if (endFrame == frame)
+
+            // Rhythm-cancel jumps skip PreJump wind-up and launch immediately.
+            if (isRhythmCancel)
             {
                 Velocity = StoredJumpVelocity;
                 StoredJumpVelocity = SVector2.zero;
                 SetState(CharacterState.Jump, frame, Frame.Infinity);
+                return;
             }
-            else
-            {
-                SetState(CharacterState.PreJump, frame, endFrame);
-            }
+
+            SetState(
+                CharacterState.PreJump,
+                frame,
+                frame + config.GetHitboxData(CharacterState.PreJump).TotalTicks
+            );
         }
 
         private static Dictionary<(FighterAttackLocation, InputFlags), CharacterState> _attackDictionary =
@@ -573,7 +512,6 @@ namespace Game.Sim
             GameOptions options,
             CharacterConfig config,
             bool isRhythmCancel,
-            int beatOffset,
             GameMode gameMode
         )
         {
@@ -655,27 +593,17 @@ namespace Game.Sim
                 }
 
                 Frame startFrame = simFrame;
-                bool rhythmCancelAdjusted = false;
                 if (isRhythmCancel && config.GetHitboxData(state).IsValidAttack(frames))
                 {
-                    // a negative beat offset means the input was early, which means we should start it later, so we negate beatoffset
-                    startFrame += -beatOffset - frames[0] + (int)options.Players[Index].BeatCancelWindow;
-                    rhythmCancelAdjusted = true;
+                    // Beat-snap: back-date StateStart by the attack's startup
+                    // so the active frame lands on simFrame itself (= the
+                    // note's dispatch frame, since ManiaState withholds the
+                    // press to the last frame of the hit window).
+                    startFrame -= frames[0];
                 }
 
                 AttackConnected = false;
                 SetState(state, startFrame, startFrame + config.GetHitboxData(state).TotalTicks, true);
-                if (rhythmCancelAdjusted)
-                {
-                    // Record the end of the note's input window
-                    // (`simFrame + (-beatOffset + BeatCancelWindow)`) so
-                    // the attack's frame-data effects and hit/hurtboxes
-                    // all come online from the same absolute frame no
-                    // matter where inside the window the player pressed.
-                    // Two different-timed presses on the same note then
-                    // produce identical combo behaviour.
-                    RhythmCancelInputEnd = simFrame + (-beatOffset + (int)options.Players[Index].BeatCancelWindow);
-                }
                 if (state == CharacterState.Grab)
                 {
                     GrabConnected = false;
@@ -683,10 +611,10 @@ namespace Game.Sim
                 return;
             }
 
-            if (dashCancelEligible && InputH.IsHeld(ForwardInput) && State == CharacterState.ForwardDash)
-            {
-                SetState(CharacterState.Running, simFrame, Frame.Infinity);
-            }
+            // if (dashCancelEligible && InputH.IsHeld(ForwardInput) && State == CharacterState.ForwardDash)
+            // {
+            //     SetState(CharacterState.Running, simFrame, Frame.Infinity);
+            // }
         }
 
         private bool IsGatlingCancelAllowed(CharacterState to, Frame simFrame, CharacterConfig config)
@@ -719,48 +647,43 @@ namespace Game.Sim
 
         public void UpdatePosition(Frame frame, GameOptions options, SVector2 otherFighterPos)
         {
-            // Dash beat-snap: under rhythm cancel, ApplyMovementState pushes
-            // a dash's StateStart to (noteTick + BeatCancelWindow), while the
-            // velocity is set on the actual input frame. Integrating that
-            // velocity before StateStart would give an extra (BeatCancelWindow
-            // - beatOffset) frames of motion whose length varies with how
-            // early/late the player hit the note. Gate the entire position
-            // update to the dash's own [StateStart, StateEnd) window so the
-            // dash only ever moves for exactly dashTicks frames, matching the
-            // combo generator's beatOffset == 0 simulation.
-            if (State.IsDash() && (frame < StateStart || frame >= StateEnd))
+            // Apply gravity if not grounded and not in airdash
+            FrameData curData = options.Players[Index].Character.GetFrameData(State, frame - StateStart);
+            if (curData.Floating)
             {
-                return;
+                Velocity /= options.Global.FloatingFactor;
             }
 
-            // Frame-data-driven velocity / gravity / floating effects are
-            // suppressed while a rhythm-canceled state is still inside the
-            // note's input window (i.e. `frame < RhythmCancelInputEnd`).
-            // The point is to keep combo mechanics independent of when
-            // inside the window the player actually hit the note: early and
-            // late presses on the same note should produce exactly the same
-            // frame-data progression afterwards, so the combo simulator's
-            // predictions stay correct regardless of player timing.
-            bool rhythmCancelLockout = RhythmCancelInputEnd != Frame.NullFrame && frame < RhythmCancelInputEnd;
-            if (!rhythmCancelLockout)
+            if (curData.ShouldApplyVel)
             {
-                // Apply gravity if not grounded and not in airdash
-                FrameData curData = options.Players[Index].Character.GetFrameData(State, frame - StateStart);
-                if (curData.Floating)
-                {
-                    Velocity /= options.Global.FloatingFactor;
-                }
+                Velocity = curData.ApplyVelocity;
+                Velocity.x *= FacingDir == FighterFacing.Left ? -1 : 1;
+            }
 
-                if (curData.ShouldApplyVel)
-                {
-                    Velocity = curData.ApplyVelocity;
-                    Velocity.x *= FacingDir == FighterFacing.Left ? -1 : 1;
-                }
+            if (curData.GravityEnabled && Position.y > options.Global.GroundY)
+            {
+                Velocity.y += options.Global.Gravity * 1 / GameManager.TPS;
+            }
 
-                if (curData.GravityEnabled && Position.y > options.Global.GroundY)
-                {
-                    Velocity.y += options.Global.Gravity * 1 / GameManager.TPS;
-                }
+            CharacterConfig config = options.Players[Index].Character;
+            switch (State)
+            {
+                case CharacterState.BackAirDash:
+                    Velocity.x = BackwardVector.x * (config.BackAirDashDistance / options.Global.BackAirDashTicks);
+                    Velocity.y = 0;
+                    break;
+                case CharacterState.ForwardAirDash:
+                    Velocity.x = ForwardVector.x * (config.ForwardAirDashDistance / options.Global.ForwardAirDashTicks);
+                    Velocity.y = 0;
+                    break;
+                case CharacterState.BackDash:
+                    Velocity.x = BackwardVector.x * (config.BackDashDistance / options.Global.BackDashTicks);
+                    Velocity.y = 0;
+                    break;
+                case CharacterState.ForwardDash:
+                    Velocity.x = ForwardVector.x * (config.ForwardDashDistance / options.Global.ForwardDashTicks);
+                    Velocity.y = 0;
+                    break;
             }
 
             // Update Position
@@ -834,21 +757,6 @@ namespace Game.Sim
 
         public void AddBoxes(Frame frame, CharacterConfig config, Physics<BoxProps> physics, int handle)
         {
-            // Emit no boxes while a rhythm-canceled state is still inside
-            // the note's input window. This keeps combo mechanics
-            // independent of player timing within the window: early and
-            // late presses on the same note both produce the same
-            // hit/hurt/pushbox timeline relative to the note, so the combo
-            // simulator's predictions hold regardless of where in the
-            // window the player actually pressed. (Without this, a pushbox
-            // appearing mid-window can let the opponent nudge the fighter
-            // out of position before the move fires, and the shift depends
-            // on press timing.)
-            if (RhythmCancelInputEnd != Frame.NullFrame && frame < RhythmCancelInputEnd)
-            {
-                return;
-            }
-
             int tick = frame - StateStart;
             FrameData frameData = config.GetFrameData(State, tick);
 

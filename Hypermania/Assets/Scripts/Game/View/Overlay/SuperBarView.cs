@@ -12,12 +12,6 @@ namespace Game.View.Overlay
         private Slider _slider2;
 
         [SerializeField]
-        private Color _color1;
-
-        [SerializeField]
-        private Color _color2;
-
-        [SerializeField]
         private Image _number1Image;
 
         [SerializeField]
@@ -29,7 +23,7 @@ namespace Game.View.Overlay
         private float _superCost;
         private float _targetValue;
 
-        public void Init(float maxSuper, float superCost)
+        public void Init(float superCost)
         {
             _superCost = superCost;
 
@@ -40,13 +34,6 @@ namespace Game.View.Overlay
             _slider2.minValue = _superCost;
             _slider2.maxValue = _superCost + _superCost;
             _slider2.value = _superCost;
-
-            var fill1 = _slider1.fillRect.GetComponent<Image>();
-            if (fill1 != null)
-                fill1.color = _color1;
-            var fill2 = _slider2.fillRect.GetComponent<Image>();
-            if (fill2 != null)
-                fill2.color = _color2;
 
             _targetValue = 0f;
             UpdateNumbers(0f);

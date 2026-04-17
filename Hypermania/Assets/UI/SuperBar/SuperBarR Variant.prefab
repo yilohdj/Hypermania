@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1724160008589024507, guid: 08a25e6373e2b89428cb3097d4f6bffc, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2100000, guid: 066f689c0a814a74bbd3660d647c1348, type: 2}
     - target: {fileID: 2344937053437533700, guid: 08a25e6373e2b89428cb3097d4f6bffc, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -20,6 +24,10 @@ PrefabInstance:
       propertyPath: m_LocalScale.x
       value: -1
       objectReference: {fileID: 0}
+    - target: {fileID: 3829135060261293473, guid: 08a25e6373e2b89428cb3097d4f6bffc, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2100000, guid: b829ad1af2f563142933c4ceb9c6ed01, type: 2}
     - target: {fileID: 4941091837495654782, guid: 08a25e6373e2b89428cb3097d4f6bffc, type: 3}
       propertyPath: m_LocalScale.x
       value: -1

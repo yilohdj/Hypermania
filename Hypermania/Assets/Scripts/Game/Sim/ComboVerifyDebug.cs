@@ -11,16 +11,23 @@ namespace Game.Sim
     /// <summary>
     /// Developer-only invariant checker for the rhythm combo system. When
     /// <see cref="InfoOptions.VerifyComboPrediction"/> is enabled,
-    /// <see cref="GameState.Advance"/> runs a parallel "perfect press"
-    /// simulation of each generated combo and stashes the predicted
-    /// <see cref="GameState"/> here at <c>EndFrame</c>. When the real
-    /// simulation reaches that frame, <see cref="CheckAtFrame"/> walks both
-    /// states field by field and logs MATCH, or the exact list of
-    /// differing fields on MISMATCH.
+    /// <see cref="ComboGenerator"/> captures a deep clone of its
+    /// <c>_working</c> state at <c>noteTick + HitHalfRange</c> for every
+    /// beat it generates (see <see cref="ComboBeatSnapshot"/>), and
+    /// <see cref="RhythmComboManager.StartRhythmCombo"/> registers those
+    /// snapshots here. When the real simulation reaches each snapshot's
+    /// <c>CompareFrame</c>, <see cref="CheckAtFrame"/> diffs the real
+    /// <see cref="GameState.Fighters"/> array against the predicted one
+    /// field by field and logs MATCH, or the exact list of differing
+    /// fighter fields on MISMATCH. Non-fighter state (GameMode, ManiaState,
+    /// Hype, etc.) is intentionally excluded from the diff — the generator
+    /// runs in Fighting mode with AlwaysRhythmCancel, so those fields
+    /// legitimately diverge from the real Mania-mode sim even when the
+    /// beat-snap invariant holds.
     ///
     /// State is static so it survives rollback (statics aren't included in
-    /// MemoryPack serialization). During rollback re-advance the prediction
-    /// is recomputed deterministically and overwrites the dict entry.
+    /// MemoryPack serialization). During rollback re-advance the predictions
+    /// are recomputed deterministically and overwrite the dict entries.
     /// </summary>
     public static class ComboVerifyDebug
     {
@@ -28,10 +35,34 @@ namespace Game.Sim
         {
             public GameState Predicted;
             public int AttackerIndex;
-            public bool Logged;
         }
 
         private static readonly Dictionary<Frame, Pending> _pending = new Dictionary<Frame, Pending>();
+
+        /// <summary>Scratch list reused by <see cref="DiscardFutureSnapshots"/>.</summary>
+        private static readonly List<Frame> _scratchRemove = new List<Frame>();
+
+        /// <summary>
+        /// Field names to skip during the reflective fighter diff. These fields
+        /// legitimately diverge between the generator's Fighting-mode sim and
+        /// the real game's Mania-mode sim:
+        ///   - <c>InputH</c>: the real game's attacker receives Mania channel
+        ///     inputs routed through DoManiaStep, while the generator applies
+        ///     direct attack inputs with AlwaysRhythmCancel. The downstream
+        ///     fighter effect is equivalent, but the raw input-history ring
+        ///     buffer stores different flags.
+        ///   - <c>Super</c>: DoManiaStep dissipates the attacker's super
+        ///     meter every frame the mania is active; the generator never
+        ///     runs DoManiaStep, so its meter stays put.
+        /// Matched by <see cref="CleanFieldName"/>-cleaned name (so
+        /// auto-property backing fields like <c>&lt;Super&gt;k__BackingField</c>
+        /// are matched as <c>Super</c>).
+        /// </summary>
+        private static readonly HashSet<string> IgnoredFields = new HashSet<string>
+        {
+            "InputH",
+            "Super",
+        };
 
         /// <summary>Max recursion depth for the field-by-field diff.</summary>
         private const int MAX_DIFF_DEPTH = 10;
@@ -48,7 +79,6 @@ namespace Game.Sim
             {
                 Predicted = predicted,
                 AttackerIndex = attackerIndex,
-                Logged = false,
             };
         }
 
@@ -56,28 +86,39 @@ namespace Game.Sim
         {
             if (!_pending.TryGetValue(frame, out Pending p))
                 return;
-            if (p.Logged)
-                return;
+            _pending.Remove(frame);
 
             StringBuilder diff = new StringBuilder();
             int lines = 0;
-            DiffValue(p.Predicted, actual, "state", diff, 0, ref lines);
+            DiffValue(p.Predicted.Fighters, actual.Fighters, "Fighters", diff, 0, ref lines);
 
-            if (diff.Length == 0)
+            if (diff.Length > 0)
             {
-                Debug.Log(
-                    $"[ComboVerify] MATCH  attacker={p.AttackerIndex} frame={frame.No}"
-                );
-            }
-            else
-            {
-                Debug.LogWarning(
+                throw new System.InvalidOperationException(
                     $"[ComboVerify] MISMATCH  attacker={p.AttackerIndex} frame={frame.No}\n{diff}"
                 );
             }
+        }
 
-            p.Logged = true;
-            _pending[frame] = p;
+        /// <summary>
+        /// Drop every remaining pending snapshot for <paramref name="attackerIndex"/>
+        /// whose <c>CompareFrame</c> is strictly after <paramref name="currentFrame"/>.
+        /// Called when the real simulation's mania terminates before its natural
+        /// <c>EndFrame</c> (miss, death, etc.) so the remaining snapshots — which
+        /// belong to beats that will never be reached — don't log spurious
+        /// MISMATCHes against a sim that has already left combo mode.
+        /// </summary>
+        public static void DiscardFutureSnapshots(int attackerIndex, Frame currentFrame)
+        {
+            _scratchRemove.Clear();
+            foreach (var kvp in _pending)
+            {
+                if (kvp.Value.AttackerIndex == attackerIndex && kvp.Key > currentFrame)
+                    _scratchRemove.Add(kvp.Key);
+            }
+            for (int i = 0; i < _scratchRemove.Count; i++)
+                _pending.Remove(_scratchRemove[i]);
+            _scratchRemove.Clear();
         }
 
         public static void Clear()
@@ -200,9 +241,12 @@ namespace Game.Sim
                 FieldInfo f = fields[i];
                 if (f.IsDefined(typeof(MemoryPackIgnoreAttribute), false))
                     continue;
+                string name = CleanFieldName(f.Name);
+                if (IgnoredFields.Contains(name))
+                    continue;
                 object ev = f.GetValue(expected);
                 object av = f.GetValue(actual);
-                DiffValue(ev, av, $"{path}.{CleanFieldName(f.Name)}", sb, depth + 1, ref lineCount);
+                DiffValue(ev, av, $"{path}.{name}", sb, depth + 1, ref lineCount);
                 if (lineCount >= MAX_DIFF_LINES)
                     return;
             }

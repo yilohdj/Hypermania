@@ -308,7 +308,7 @@ namespace Game.Sim
             }
 
             PartialSimFrameCount = 0;
-            (bool shouldRhythmCancel, int beatOffset) rhythmCancel = default;
+            bool rhythmCancel = false;
             Span<GameInput> remapInputs = stackalloc GameInput[Fighters.Length];
             switch (GameMode)
             {
@@ -335,7 +335,7 @@ namespace Game.Sim
 
             if (options.AlwaysRhythmCancel)
             {
-                rhythmCancel = (true, 0);
+                rhythmCancel = true;
             }
 
             // Push the current input into the input history, to read for buffering.
@@ -373,8 +373,7 @@ namespace Game.Sim
             // This function internally appies changes to the fighter's velocity based on movement inputs
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i]
-                    .ApplyMovementState(SimFrame, options, rhythmCancel.shouldRhythmCancel, rhythmCancel.beatOffset);
+                Fighters[i].ApplyMovementState(SimFrame, options, rhythmCancel);
             }
 
             bool wasSuper0 = Fighters[0].IsSuperAttack;
@@ -388,8 +387,7 @@ namespace Game.Sim
                         SimFrame,
                         options,
                         options.Players[i].Character,
-                        rhythmCancel.shouldRhythmCancel,
-                        rhythmCancel.beatOffset,
+                        rhythmCancel,
                         GameMode
                     );
             }
@@ -543,16 +541,24 @@ namespace Game.Sim
                     attackerIndex,
                     comboBeats
                 );
-
-                if (options.InfoOptions != null && options.InfoOptions.VerifyComboPrediction)
-                {
-                    RunPerfectPressPrediction(options, attackerIndex);
-                }
             }
 
             if (options.InfoOptions != null && options.InfoOptions.VerifyComboPrediction)
             {
                 ComboVerifyDebug.CheckAtFrame(RealFrame, this);
+
+                // If a mania has terminated (natural end, missed note, fighter
+                // death, etc. — all paths clear EndFrame to NullFrame), drop
+                // any remaining snapshots for that attacker whose CompareFrame
+                // is still in the future. Without this, an early-failed combo
+                // would log spurious MISMATCHes for beats that never happened.
+                for (int i = 0; i < Manias.Length; i++)
+                {
+                    if (Manias[i].EndFrame == Frame.NullFrame)
+                    {
+                        ComboVerifyDebug.DiscardFutureSnapshots(i, RealFrame);
+                    }
+                }
             }
         }
 
@@ -577,13 +583,13 @@ namespace Game.Sim
             }
         }
 
-        private (bool, int) DoManiaStep(
+        private bool DoManiaStep(
             GameOptions options,
             (GameInput input, InputStatus status)[] inputs,
             Span<GameInput> outInputs
         )
         {
-            (bool, int) rhythmCancel = (false, 0);
+            bool rhythmCancel = false;
 
             // Dissipate SuperCost super per 8 beats from the combo attacker.
             sfloat dissipationPerFrame =
@@ -606,9 +612,12 @@ namespace Game.Sim
                             GameMode = GameMode.Fighting;
                             ClearLockedHitstun();
                             break;
-                        case ManiaEventKind.Hit:
+                        case ManiaEventKind.Input:
                             outInputs[i].Flags |= ev.Note.HitInput;
-                            rhythmCancel = (true, ev.Offset);
+                            rhythmCancel = true;
+                            break;
+                        case ManiaEventKind.Hit:
+                            // View-only feedback event; no sim effect.
                             break;
                         case ManiaEventKind.Missed:
                             // Punish the missing fighter: stun for
@@ -1015,112 +1024,6 @@ namespace Game.Sim
             }
 
             return hash;
-        }
-
-        [ThreadStatic]
-        private static ArrayBufferWriter<byte> _predictWriter;
-
-        private static ArrayBufferWriter<byte> PredictWriter
-        {
-            get
-            {
-                if (_predictWriter == null)
-                    _predictWriter = new ArrayBufferWriter<byte>(4096);
-                return _predictWriter;
-            }
-        }
-
-        /// <summary>
-        /// Runs a parallel "perfect on-beat press" simulation of the combo that
-        /// was just queued into <c>Manias[attackerIndex]</c>, and stores the
-        /// predicted <see cref="GameState"/> at the mania's <c>EndFrame</c> into
-        /// <see cref="ComboVerifyDebug"/>. The real simulation will then diff
-        /// against that state field-by-field when it reaches the same frame,
-        /// verifying the beat-snap invariant (presses anywhere in the hit
-        /// window produce the same state as perfect-on-beat presses). Called
-        /// only when <see cref="InfoOptions.VerifyComboPrediction"/> is enabled.
-        /// </summary>
-        private void RunPerfectPressPrediction(GameOptions options, int attackerIndex)
-        {
-            Frame endFrame = Manias[attackerIndex].EndFrame;
-            if (endFrame == Frame.NullFrame || endFrame <= RealFrame)
-                return;
-
-            // MemoryPack deep-clone of this GameState. Same pattern as
-            // ComboGenerator.CloneInto, kept local here so ComboGenerator's
-            // own buffer isn't disturbed.
-            PredictWriter.Clear();
-            MemoryPackSerializer.Serialize(PredictWriter, this);
-            GameState predicted = MemoryPackSerializer.Deserialize<GameState>(
-                PredictWriter.WrittenSpan.ToArray()
-            );
-
-            // Clone options with VerifyComboPrediction = false so the
-            // prediction's own Advance calls don't recurse into another
-            // prediction run (or trigger CheckAtFrame).
-            GameOptions predictOptions = new GameOptions
-            {
-                Global = options.Global,
-                Players = options.Players,
-                LocalPlayers = options.LocalPlayers,
-                AlwaysRhythmCancel = options.AlwaysRhythmCancel,
-                InfoOptions = new InfoOptions
-                {
-                    ShowFrameData = options.InfoOptions.ShowFrameData,
-                    ShowBoxes = options.InfoOptions.ShowBoxes,
-                    VerifyComboPrediction = false,
-                },
-            };
-
-            (GameInput input, InputStatus status)[] inputs =
-                new (GameInput, InputStatus)[predicted.Fighters.Length];
-            for (int i = 0; i < inputs.Length; i++)
-                inputs[i] = (GameInput.None, InputStatus.Confirmed);
-            int defenderIndex = 1 - attackerIndex;
-
-            while (predicted.RealFrame < endFrame)
-            {
-                // Advance increments RealFrame at the top, so the input
-                // passed here applies to frame (predicted.RealFrame + 1).
-                Frame inputFrame = predicted.RealFrame + 1;
-                InputFlags attackerFlags = BuildPerfectPressInputForFrame(
-                    predicted.Manias[attackerIndex],
-                    inputFrame
-                );
-                inputs[attackerIndex] = (new GameInput(attackerFlags), InputStatus.Confirmed);
-                inputs[defenderIndex] = (GameInput.None, InputStatus.Confirmed);
-                predicted.Advance(predictOptions, inputs);
-            }
-
-            ComboVerifyDebug.StorePrediction(endFrame, predicted, attackerIndex);
-        }
-
-        /// <summary>
-        /// Returns the <see cref="InputFlags"/> for an attacker pressing the
-        /// mania channels whose queued notes fire on <paramref name="frame"/>,
-        /// OR'd together. Returns <see cref="InputFlags.None"/> if no note
-        /// fires on that frame.
-        /// </summary>
-        private static InputFlags BuildPerfectPressInputForFrame(in ManiaState mania, Frame frame)
-        {
-            InputFlags flags = InputFlags.None;
-            if (mania.Channels == null)
-                return flags;
-            for (int c = 0; c < mania.Channels.Length; c++)
-            {
-                Deque<ManiaNote> notes = mania.Channels[c].Notes;
-                if (notes == null)
-                    continue;
-                for (int n = 0; n < notes.Count; n++)
-                {
-                    if (notes[n].Tick == frame)
-                    {
-                        flags |= ManiaState.CHANNEL_INPUT[c];
-                        break;
-                    }
-                }
-            }
-            return flags;
         }
     }
 }

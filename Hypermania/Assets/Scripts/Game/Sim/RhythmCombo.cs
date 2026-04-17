@@ -82,6 +82,17 @@ namespace Game.Sim
 
             state.Enable(combo.EndFrame);
 
+            if (options.InfoOptions != null
+                && options.InfoOptions.VerifyComboPrediction
+                && combo.BeatSnapshots != null)
+            {
+                for (int i = 0; i < combo.BeatSnapshots.Count; i++)
+                {
+                    ComboBeatSnapshot snap = combo.BeatSnapshots[i];
+                    ComboVerifyDebug.StorePrediction(snap.CompareFrame, snap.Predicted, attackerIndex);
+                }
+            }
+
             return hitstop;
         }
     }
