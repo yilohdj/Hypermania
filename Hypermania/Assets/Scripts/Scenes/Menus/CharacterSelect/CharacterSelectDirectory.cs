@@ -532,7 +532,13 @@ namespace Scenes.Menus.CharacterSelect
             {
                 Global = _globalConfig != null ? _globalConfig : scaffold.Global,
                 InfoOptions =
-                    scaffold.InfoOptions ?? new InfoOptions { ShowFrameData = training, ShowBoxes = training },
+                    scaffold.InfoOptions
+                    ?? new InfoOptions
+                    {
+                        ShowFrameData = training,
+                        ShowBoxes = training,
+                        VerifyComboPrediction = training,
+                    },
                 Players = new PlayerOptions[2],
                 AlwaysRhythmCancel = false,
             };

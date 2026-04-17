@@ -44,6 +44,7 @@ namespace Game.Sim
         public VictoryKind[] Victories;
         public int NumVictories;
         public bool GrabConnected;
+        public bool AttackConnected;
         public bool IsSuperAttack;
         public int SuperComboBeats;
 
@@ -349,13 +350,24 @@ namespace Game.Sim
 
         public void ApplyMovementState(Frame frame, GameOptions options, bool isRhythmCancel, int beatOffset)
         {
+            CharacterConfig config = options.Players[Index].Character;
+            sfloat runMult = State == CharacterState.Running ? options.Global.RunningSpeedMultiplier : (sfloat)1f;
+
+            bool gatlingPreJumpAllowed =
+                (AttackLocation == FighterAttackLocation.Standing || AttackLocation == FighterAttackLocation.Crouching)
+                && InputH.IsHeld(InputFlags.Up)
+                && IsGatlingCancelAllowed(CharacterState.PreJump, frame, config);
+
+            if (gatlingPreJumpAllowed)
+            {
+                TriggerPreJump(frame, options, isRhythmCancel, beatOffset, runMult);
+                return;
+            }
+
             if (!Actionable && !isRhythmCancel)
             {
                 return;
             }
-
-            sfloat runMult = State == CharacterState.Running ? options.Global.RunningSpeedMultiplier : (sfloat)1f;
-            CharacterConfig config = options.Players[Index].Character;
 
             Frame startFrame = frame;
             // Absolute frame of the end of the note's input window
@@ -383,48 +395,7 @@ namespace Game.Sim
             {
                 if (InputH.IsHeld(InputFlags.Up))
                 {
-                    // Jump
-                    if (InputH.PressedAndReleasedRecently(InputFlags.Down, options.Global.Input.SuperJumpWindow))
-                    {
-                        StoredJumpVelocity.y = config.JumpVelocity * options.Global.SuperJumpMultiplier;
-                    }
-                    else
-                    {
-                        StoredJumpVelocity.y = config.JumpVelocity;
-                    }
-
-                    if (InputH.IsHeld(ForwardInput))
-                    {
-                        StoredJumpVelocity.x = ForwardVector.x * config.ForwardSpeed * runMult;
-                    }
-                    else if (InputH.IsHeld(BackwardInput))
-                    {
-                        StoredJumpVelocity.x = BackwardVector.x * config.BackSpeed;
-                    }
-                    else
-                    {
-                        StoredJumpVelocity.x = 0;
-                    }
-
-                    Velocity = SVector2.zero;
-                    Frame endFrame = frame + config.GetHitboxData(CharacterState.PreJump).TotalTicks;
-                    if (isRhythmCancel)
-                    {
-                        endFrame = frame - beatOffset + (int)options.Players[Index].BeatCancelWindow;
-                    }
-
-                    // handle the case when jump is pressed on the last frame
-                    if (endFrame == frame)
-                    {
-                        Velocity = StoredJumpVelocity;
-                        StoredJumpVelocity = SVector2.zero;
-                        SetState(CharacterState.Jump, frame, Frame.Infinity);
-                    }
-                    else
-                    {
-                        SetState(CharacterState.PreJump, frame, endFrame);
-                    }
-
+                    TriggerPreJump(frame, options, isRhythmCancel, beatOffset, runMult);
                     return;
                 }
 
@@ -526,6 +497,58 @@ namespace Game.Sim
             }
         }
 
+        private void TriggerPreJump(
+            Frame frame,
+            GameOptions options,
+            bool isRhythmCancel,
+            int beatOffset,
+            sfloat runMult
+        )
+        {
+            CharacterConfig config = options.Players[Index].Character;
+
+            if (InputH.PressedAndReleasedRecently(InputFlags.Down, options.Global.Input.SuperJumpWindow))
+            {
+                StoredJumpVelocity.y = config.JumpVelocity * options.Global.SuperJumpMultiplier;
+            }
+            else
+            {
+                StoredJumpVelocity.y = config.JumpVelocity;
+            }
+
+            if (InputH.IsHeld(ForwardInput))
+            {
+                StoredJumpVelocity.x = ForwardVector.x * config.ForwardSpeed * runMult;
+            }
+            else if (InputH.IsHeld(BackwardInput))
+            {
+                StoredJumpVelocity.x = BackwardVector.x * config.BackSpeed;
+            }
+            else
+            {
+                StoredJumpVelocity.x = 0;
+            }
+
+            Velocity = SVector2.zero;
+            Frame endFrame = frame + config.GetHitboxData(CharacterState.PreJump).TotalTicks;
+            if (isRhythmCancel)
+            {
+                endFrame = frame - beatOffset + (int)options.Players[Index].BeatCancelWindow;
+            }
+
+            AttackConnected = false;
+            if (endFrame == frame)
+            {
+                Velocity = StoredJumpVelocity;
+                StoredJumpVelocity = SVector2.zero;
+                SetState(CharacterState.Jump, frame, Frame.Infinity);
+            }
+            else
+            {
+                SetState(CharacterState.PreJump, frame, endFrame);
+            }
+        }
+
         private static Dictionary<(FighterAttackLocation, InputFlags), CharacterState> _attackDictionary =
             new Dictionary<(FighterAttackLocation, InputFlags), CharacterState>
             {
@@ -609,57 +632,89 @@ namespace Game.Sim
                     (simFrame + options.Global.BackDashCancelAfterTicks >= StateEnd) && State == CharacterState.BackDash
                 );
 
-            if (!Actionable && !dashCancelEligible && !isRhythmCancel)
-            {
-                return;
-            }
+            bool canActNormally = Actionable || dashCancelEligible || isRhythmCancel;
 
             int[] frames = new int[HitboxData.ATTACK_FRAME_TYPE_ORDER.Length];
             foreach (((var loc, var input), var state) in _attackDictionary)
             {
-                if (InputH.PressedRecently(input, bufferWindow) && AttackLocation == loc)
+                if (!(InputH.PressedRecently(input, bufferWindow) && AttackLocation == loc))
                 {
-                    if (
-                        AttackLocation == FighterAttackLocation.Standing
-                        || AttackLocation == FighterAttackLocation.Crouching
-                    )
-                    {
-                        Velocity = SVector2.zero;
-                    }
-
-                    Frame startFrame = simFrame;
-                    bool rhythmCancelAdjusted = false;
-                    if (isRhythmCancel && config.GetHitboxData(state).IsValidAttack(frames))
-                    {
-                        // a negative beat offset means the input was early, which means we should start it later, so we negate beatoffset
-                        startFrame += -beatOffset - frames[0] + (int)options.Players[Index].BeatCancelWindow;
-                        rhythmCancelAdjusted = true;
-                    }
-
-                    SetState(state, startFrame, startFrame + config.GetHitboxData(state).TotalTicks, true);
-                    if (rhythmCancelAdjusted)
-                    {
-                        // Record the end of the note's input window
-                        // (`simFrame + (-beatOffset + BeatCancelWindow)`) so
-                        // the attack's frame-data effects and hit/hurtboxes
-                        // all come online from the same absolute frame no
-                        // matter where inside the window the player pressed.
-                        // Two different-timed presses on the same note then
-                        // produce identical combo behaviour.
-                        RhythmCancelInputEnd = simFrame + (-beatOffset + (int)options.Players[Index].BeatCancelWindow);
-                    }
-                    if (state == CharacterState.Grab)
-                    {
-                        GrabConnected = false;
-                    }
-                    return;
+                    continue;
                 }
+                if (!canActNormally && !IsGatlingCancelAllowed(state, simFrame, config))
+                {
+                    continue;
+                }
+
+                if (
+                    AttackLocation == FighterAttackLocation.Standing
+                    || AttackLocation == FighterAttackLocation.Crouching
+                )
+                {
+                    Velocity = SVector2.zero;
+                }
+
+                Frame startFrame = simFrame;
+                bool rhythmCancelAdjusted = false;
+                if (isRhythmCancel && config.GetHitboxData(state).IsValidAttack(frames))
+                {
+                    // a negative beat offset means the input was early, which means we should start it later, so we negate beatoffset
+                    startFrame += -beatOffset - frames[0] + (int)options.Players[Index].BeatCancelWindow;
+                    rhythmCancelAdjusted = true;
+                }
+
+                AttackConnected = false;
+                SetState(state, startFrame, startFrame + config.GetHitboxData(state).TotalTicks, true);
+                if (rhythmCancelAdjusted)
+                {
+                    // Record the end of the note's input window
+                    // (`simFrame + (-beatOffset + BeatCancelWindow)`) so
+                    // the attack's frame-data effects and hit/hurtboxes
+                    // all come online from the same absolute frame no
+                    // matter where inside the window the player pressed.
+                    // Two different-timed presses on the same note then
+                    // produce identical combo behaviour.
+                    RhythmCancelInputEnd = simFrame + (-beatOffset + (int)options.Players[Index].BeatCancelWindow);
+                }
+                if (state == CharacterState.Grab)
+                {
+                    GrabConnected = false;
+                }
+                return;
             }
 
             if (dashCancelEligible && InputH.IsHeld(ForwardInput) && State == CharacterState.ForwardDash)
             {
                 SetState(CharacterState.Running, simFrame, Frame.Infinity);
             }
+        }
+
+        private bool IsGatlingCancelAllowed(CharacterState to, Frame simFrame, CharacterConfig config)
+        {
+            if (!AttackConnected) return false;
+            if (!config.HasGatling(State, to)) return false;
+
+            HitboxData fromData = config.GetHitboxData(State);
+            int total = fromData.StartupTicks + fromData.ActiveTicks + fromData.RecoveryTicks;
+            if (total == 0) return false;
+
+            int ticksIntoState = simFrame - StateStart;
+            int recoveryStart = fromData.StartupTicks + fromData.ActiveTicks;
+            int recoveryEnd = total;
+            if (ticksIntoState < recoveryStart || ticksIntoState >= recoveryEnd) return false;
+
+            HitboxData toData = config.GetHitboxData(to);
+
+            int cancelWindow;
+            if (toData.StartupTicks == 0)
+            {
+                cancelWindow = fromData.RecoveryTicks;
+            }
+            else
+            {
+                cancelWindow = Math.Max(0, toData.StartupTicks - fromData.OnHitAdvantage + 1);
+            }
+            return ticksIntoState >= recoveryEnd - cancelWindow;
         }
 
         public void UpdatePosition(Frame frame, GameOptions options, SVector2 otherFighterPos)

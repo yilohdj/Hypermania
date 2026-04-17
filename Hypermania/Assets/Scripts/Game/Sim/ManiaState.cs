@@ -108,7 +108,7 @@ namespace Game.Sim
 
         public bool Enabled(Frame frame) => frame <= EndFrame;
 
-        private static readonly InputFlags[] CHANNEL_INPUT =
+        internal static readonly InputFlags[] CHANNEL_INPUT =
         {
             InputFlags.Mania1,
             InputFlags.Mania2,

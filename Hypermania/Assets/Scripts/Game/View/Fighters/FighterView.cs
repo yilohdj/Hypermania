@@ -25,6 +25,8 @@ namespace Game.View.Fighters
         [SerializeField]
         private float _hitJitterMagnitude = 0.04f;
 
+        private int _jitterFramesRemaining;
+
         public virtual void Init(CharacterConfig characterConfig, int skinIndex)
         {
             if (skinIndex < 0 || skinIndex >= characterConfig.Skins.Length)
@@ -41,17 +43,22 @@ namespace Game.View.Fighters
             _spriteLibrary.spriteLibraryAsset = characterConfig.Skins[skinIndex].SpriteLibrary;
         }
 
-        public virtual void Render(Frame frame, in FighterState state, int hitstopRemaining)
+        public virtual void Render(Frame frame, in FighterState state)
         {
             Vector3 pos = transform.position;
             pos.x = (float)state.Position.x;
             pos.y = (float)state.Position.y;
 
-            if (hitstopRemaining > 0 && IsHitRecipient(state.State))
+            if (state.HitProps.HasValue && IsHitRecipient(state.State))
+            {
+                _jitterFramesRemaining = state.HitProps.Value.HitstopTicks;
+            }
+            if (_jitterFramesRemaining > 0)
             {
                 Vector2 jitter = UnityEngine.Random.insideUnitCircle * _hitJitterMagnitude;
                 pos.x += jitter.x;
                 pos.y += jitter.y;
+                _jitterFramesRemaining--;
             }
 
             transform.position = pos;

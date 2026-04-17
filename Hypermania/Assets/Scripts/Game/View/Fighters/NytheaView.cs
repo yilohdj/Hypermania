@@ -9,9 +9,9 @@ namespace Game.View.Fighters
     [RequireComponent(typeof(SpriteLibrary))]
     public class NytheaView : FighterView
     {
-        public override void Render(Frame frame, in FighterState state, int hitstopRemaining)
+        public override void Render(Frame frame, in FighterState state)
         {
-            base.Render(frame, state, hitstopRemaining);
+            base.Render(frame, state);
         }
     }
 }

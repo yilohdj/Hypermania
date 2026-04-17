@@ -109,7 +109,7 @@ namespace Game.View.Overlay
             {
                 Vector3 worldPos = _spawnedFighter.transform.position;
                 _dummyFighter.Position = new SVector2((sfloat)worldPos.x, (sfloat)worldPos.y);
-                _spawnedFighter.Render(Frame.FirstFrame + _displayStartFrame, _dummyFighter, 0);
+                _spawnedFighter.Render(Frame.FirstFrame + _displayStartFrame, _dummyFighter);
             }
         }
 
