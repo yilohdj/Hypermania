@@ -615,7 +615,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2121600843388424694}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.5411397, w: 0.8409327}
+  m_LocalRotation: {x: -0, y: -0, z: -0.000057741985, w: 1}
   m_LocalPosition: {x: 0.243, y: -0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1574,7 +1574,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 22
-  m_Sprite: {fileID: 12791186037786679, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: -499949656127789506, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1620,7 +1620,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 9.3858616e-30
-  m_labelHash: 9.768673e-35
+  m_labelHash: 2.3495562e-31
   m_SpriteKey: 0
   m_SpriteHash: 565322640
 --- !u!114 &4759287604271722911
@@ -1661,7 +1661,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3489157634829495511}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0.030196395, w: 0.9995441}
+  m_LocalRotation: {x: -0, y: -0, z: -0.001989779, w: 0.9999981}
   m_LocalPosition: {x: 0.462, y: -0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2117,7 +2117,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4460331461475365090}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.7046506, w: 0.7095545}
+  m_LocalRotation: {x: -0, y: -0, z: -0.019812407, w: 0.9998038}
   m_LocalPosition: {x: 0.2779, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -2826,7 +2826,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 9
-  m_Sprite: {fileID: 5134510135950801994, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: 1559245666661877155, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -2871,7 +2871,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 1.7999621e-26
-  m_labelHash: 8.457867e-20
+  m_labelHash: 1.1669437e-21
   m_SpriteKey: 0
   m_SpriteHash: 492650935
 --- !u!114 &560334898822486686
@@ -3000,7 +3000,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 11
-  m_Sprite: {fileID: 3716167768641779419, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: -225116827745065158, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -3045,7 +3045,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 1.3536197e-11
-  m_labelHash: 4.305248e-33
+  m_labelHash: 7.263614e-26
   m_SpriteKey: 0
   m_SpriteHash: 1073352801
 --- !u!114 &6910332563105507909
@@ -3928,7 +3928,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8377768131339770111}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0.10744677, w: 0.99421084}
+  m_LocalRotation: {x: -0, y: -0, z: 0.014309751, w: 0.9998976}
   m_LocalPosition: {x: 0.457, y: -0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -4014,7 +4014,7 @@ SpriteRenderer:
   m_SortingLayerID: -1444139175
   m_SortingLayer: -2
   m_SortingOrder: 23
-  m_Sprite: {fileID: -7039239808610794768, guid: 9f785f954604d304898bb06f209dd380, type: 3}
+  m_Sprite: {fileID: -6181522110202423296, guid: 9f785f954604d304898bb06f209dd380, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -4060,7 +4060,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_CategoryHash: 3.7509393e-20
-  m_labelHash: 2.3495562e-31
+  m_labelHash: 3.6110543e-13
   m_SpriteKey: 0
   m_SpriteHash: 557457488
 --- !u!114 &2627175780933264240
@@ -4662,11 +4662,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -6524092281346244289, guid: 9f785f954604d304898bb06f209dd380, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.45289886
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -6524092281346244289, guid: 9f785f954604d304898bb06f209dd380, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.8915619
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -6524092281346244289, guid: 9f785f954604d304898bb06f209dd380, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
