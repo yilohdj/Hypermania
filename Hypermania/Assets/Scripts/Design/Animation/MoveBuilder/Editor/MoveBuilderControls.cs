@@ -1,3 +1,4 @@
+using Game.View;
 using Game.View.Fighters;
 using UnityEditor;
 using UnityEngine;
@@ -5,7 +6,7 @@ using Utils.SoftFloat;
 
 namespace Design.Animation.MoveBuilder.Editor
 {
-    [CustomEditor(typeof(FighterView), true)]
+    [CustomEditor(typeof(EntityView), true)]
     public sealed class MoveBuilderControls : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
@@ -15,7 +16,7 @@ namespace Design.Animation.MoveBuilder.Editor
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("MoveBuilder Controls", EditorStyles.boldLabel);
 
-            var fighter = (FighterView)target;
+            var fighter = (EntityView)target;
             var m = MoveBuilderModelStore.Get(fighter);
             var animState = MoveBuilderAnimationState.GetAnimState();
 
@@ -80,6 +81,8 @@ namespace Design.Animation.MoveBuilder.Editor
                 m.AddBox(state, HitboxKind.Hurtbox);
             if (GUILayout.Button("Add Hitbox (A)"))
                 m.AddBox(state, HitboxKind.Hitbox);
+            if (GUILayout.Button("Add Grabbox (G)"))
+                m.AddBox(state, HitboxKind.Grabbox);
 
             using (new EditorGUI.DisabledScope(m.SelectedBoxIndex < 0 || m.SelectedBoxIndex >= frame.Boxes.Count))
             {
@@ -136,6 +139,13 @@ namespace Design.Animation.MoveBuilder.Editor
             EditorGUILayout.Space(6);
             EditorGUILayout.LabelField("Frame Data", EditorStyles.boldLabel);
             frame.FrameType = (FrameType)EditorGUILayout.EnumPopup("Frame Type", frame.FrameType);
+            frame.Floating = EditorGUILayout.Toggle("Floating", frame.Floating);
+            frame.ShouldApplyVel = EditorGUILayout.Toggle("Should Apply Velocity", frame.ShouldApplyVel);
+            using (new EditorGUI.DisabledScope(!frame.ShouldApplyVel))
+            {
+                frame.ApplyVelocity = SFloatGUI.Field("Apply Velocity", frame.ApplyVelocity);
+            }
+            frame.GravityEnabled = EditorGUILayout.Toggle("Gravity Enabled", frame.GravityEnabled);
         }
 
         private void DrawBoxList(MoveBuilderModel m, MoveBuilderAnimationState state)
@@ -185,6 +195,7 @@ namespace Design.Animation.MoveBuilder.Editor
 
             using (new EditorGUI.DisabledScope(p.Kind != HitboxKind.Hitbox))
             {
+                p.AttackKind = (AttackKind)EditorGUILayout.EnumPopup("Attack Kind", p.AttackKind);
                 p.KnockdownKind = (KnockdownKind)EditorGUILayout.EnumPopup("Knockdown Kind", p.KnockdownKind);
                 p.Damage = EditorGUILayout.IntField("Damage", p.Damage);
                 using (new EditorGUI.DisabledScope(p.KnockdownKind != KnockdownKind.None))
@@ -195,7 +206,11 @@ namespace Design.Animation.MoveBuilder.Editor
                 p.HitstopTicks = EditorGUILayout.IntField("Hitstop Ticks", p.HitstopTicks);
                 p.BlockstopTicks = EditorGUILayout.IntField("Blockstop Ticks", p.BlockstopTicks);
                 p.Knockback = SFloatGUI.Field("Knockback", p.Knockback);
-                p.StartsRhythmCombo = EditorGUILayout.Toggle("Starts rhythm combo", p.StartsRhythmCombo);
+            }
+
+            using (new EditorGUI.DisabledScope(p.Kind != HitboxKind.Grabbox))
+            {
+                p.GrabPosition = SFloatGUI.Field("Grab Position", p.GrabPosition);
             }
 
             if (p.Kind == HitboxKind.Hitbox)

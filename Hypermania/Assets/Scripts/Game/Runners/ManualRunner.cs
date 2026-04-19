@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 namespace Game.Runners
 {
-    public class ManualRunner : SingleplayerRunner
+    public class ManualRunner : LocalRunner
     {
         [SerializeField]
         private Key _advanceKey;
@@ -13,31 +13,50 @@ namespace Game.Runners
 
         private float _curHoldS;
 
-        public override void Poll(float deltaTime)
+        public override bool Poll(float deltaTime)
         {
             if (!_initialized)
             {
-                return;
+                return false;
             }
-            _inputBuffer.Saturate();
+
+            for (int i = 0; i < _inputBuffers.Length; i++)
+            {
+                _inputBuffers[i].Saturate();
+            }
+
             if (Keyboard.current[Key.RightArrow].wasPressedThisFrame)
             {
-                GameLoop();
-                _inputBuffer.Clear();
+                bool finished = GameLoop(deltaTime);
+                for (int i = 0; i < _inputBuffers.Length; i++)
+                {
+                    _inputBuffers[i].Clear();
+                }
+
+                if (finished)
+                    return true;
             }
             if (Keyboard.current[Key.RightArrow].isPressed)
             {
                 _curHoldS += deltaTime;
                 if (_curHoldS >= _holdS)
                 {
-                    GameLoop();
-                    _inputBuffer.Clear();
+                    bool finished = GameLoop(deltaTime);
+                    for (int i = 0; i < _inputBuffers.Length; i++)
+                    {
+                        _inputBuffers[i].Clear();
+                    }
+
+                    if (finished)
+                        return true;
                 }
             }
             else
             {
                 _curHoldS = 0;
             }
+
+            return false;
         }
     }
 }

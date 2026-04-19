@@ -9,6 +9,15 @@ namespace Game.View.Events
     {
         MediumPunch,
         HeavyPunch,
+        ComboGood,
+        ComboMiss,
+        ComboOk,
+        Block,
+        Woosh,
+        ScytheSwing,
+        Sweep,
+        SuperReady,
+        SuperStart,
     }
 
     [Serializable]
