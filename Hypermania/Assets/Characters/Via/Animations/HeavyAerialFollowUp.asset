@@ -10,51 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: be373a019aa534843a9f8df3be036a28, type: 3}
-  m_Name: HeavyAerial
+  m_Name: HeavyAerialFollowUp
   m_EditorClassIdentifier: 
-  Clip: {fileID: 7400000, guid: b4ed83ba3329ecd429af879130851e7c, type: 2}
+  Clip: {fileID: 7400000, guid: 2b971bc0a0d797e428b9c68a300ceb51, type: 2}
   ComboEligible: 1
   Frames:
-  - Boxes: []
-    FrameType: 0
-    Floating: 0
-    GravityEnabled: 1
-    ShouldApplyVel: 0
-    ApplyVelocity:
-      x:
-        rawValue: 0
-      y:
-        rawValue: 0
-  - Boxes: []
-    FrameType: 0
-    Floating: 0
-    GravityEnabled: 1
-    ShouldApplyVel: 0
-    ApplyVelocity:
-      x:
-        rawValue: 0
-      y:
-        rawValue: 0
-  - Boxes: []
-    FrameType: 0
-    Floating: 0
-    GravityEnabled: 1
-    ShouldApplyVel: 0
-    ApplyVelocity:
-      x:
-        rawValue: 0
-      y:
-        rawValue: 0
-  - Boxes: []
-    FrameType: 0
-    Floating: 0
-    GravityEnabled: 1
-    ShouldApplyVel: 0
-    ApplyVelocity:
-      x:
-        rawValue: 0
-      y:
-        rawValue: 0
   - Boxes: []
     FrameType: 0
     Floating: 0
