@@ -22,6 +22,14 @@ namespace Game.View.Fighters
         [SerializeField]
         private Transform _dustEmitterLocation;
 
+        [SerializeField]
+        private Transform _visualCenter;
+
+        [SerializeField]
+        private float _hitJitterMagnitude = 0.04f;
+
+        private int _jitterFramesRemaining;
+
         public virtual void Init(CharacterConfig characterConfig, int skinIndex)
         {
             if (skinIndex < 0 || skinIndex >= characterConfig.Skins.Length)
@@ -43,6 +51,18 @@ namespace Game.View.Fighters
             Vector3 pos = transform.position;
             pos.x = (float)state.Position.x;
             pos.y = (float)state.Position.y;
+
+            if (state.HitProps.HasValue && IsHitRecipient(state.State))
+            {
+                _jitterFramesRemaining = state.HitProps.Value.HitstopTicks;
+            }
+            if (_jitterFramesRemaining > 0)
+            {
+                Vector2 jitter = UnityEngine.Random.insideUnitCircle * _hitJitterMagnitude;
+                pos.x += jitter.x;
+                pos.y += jitter.y;
+                _jitterFramesRemaining--;
+            }
 
             transform.position = pos;
             transform.localScale = new Vector3(state.FacingDir == FighterFacing.Left ? -1 : 1, 1f, 1f);
@@ -72,12 +92,9 @@ namespace Game.View.Fighters
             }
             if (state.BlockedLastRealFrame)
             {
-                vfxManager.AddDesired(
-                    VfxKind.Block,
-                    realFrame,
-                    position: (Vector2)state.HitLocation.Value,
-                    direction: (Vector2)state.HitProps.Value.Knockback
-                );
+                Vector2 center = (Vector2)_visualCenter.position;
+                Vector2 hit = (Vector2)state.HitLocation.Value;
+                vfxManager.AddDesired(VfxKind.Block, realFrame, position: center, direction: center - hit);
                 sfxManager.AddDesired(SfxKind.Block, realFrame);
             }
             if (state.HitLastRealFrame)
@@ -98,6 +115,9 @@ namespace Game.View.Fighters
                 );
             }
         }
+
+        private static bool IsHitRecipient(CharacterState s) =>
+            s == CharacterState.Hit || s == CharacterState.Knockdown || s == CharacterState.Death;
 
         public void DeInit()
         {

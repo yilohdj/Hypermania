@@ -45,6 +45,7 @@ namespace Game.Runners
         public override void DeInit()
         {
             _session = null;
+            ComboVerifyDebug.Clear();
             base.DeInit();
         }
 

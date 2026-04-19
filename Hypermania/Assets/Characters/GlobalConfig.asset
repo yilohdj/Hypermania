@@ -36,6 +36,12 @@ MonoBehaviour:
     rawValue: 1050253722
   PassiveSuperGain:
     rawValue: 1028443341
+  SuperMax:
+    rawValue: 1128792064
+  SuperCost:
+    rawValue: 1120403456
+  SuperTier1Beats: 8
+  SuperTier2Beats: 16
   CameraHalfHeight:
     rawValue: 1070386381
   CameraPadding:

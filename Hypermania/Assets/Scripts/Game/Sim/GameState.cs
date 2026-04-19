@@ -6,6 +6,7 @@ using Design.Configs;
 using Game.View.Overlay;
 using MemoryPack;
 using Netcode.Rollback;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utils;
 using Utils.SoftFloat;
@@ -66,6 +67,18 @@ namespace Game.Sim
     {
         public bool ShowFrameData;
         public bool ShowBoxes;
+
+        /// <summary>
+        /// Developer-only. When true, each generated rhythm combo is simulated
+        /// a second time with perfect on-beat mania presses, and the real
+        /// <see cref="GameState"/> at the mania's <c>EndFrame</c> is diffed
+        /// field-by-field against the prediction via
+        /// <see cref="ComboVerifyDebug"/>. Any differing field means pressing
+        /// within the hit window (instead of exactly on the beat) produced a
+        /// different downstream state — i.e. the beat-snap / rhythm-cancel
+        /// invariant is broken. Log-only; no gameplay effect.
+        /// </summary>
+        public bool VerifyComboPrediction;
     }
 
     [Serializable]
@@ -295,7 +308,7 @@ namespace Game.Sim
             }
 
             PartialSimFrameCount = 0;
-            (bool shouldRhythmCancel, int beatOffset) rhythmCancel = default;
+            bool rhythmCancel = false;
             Span<GameInput> remapInputs = stackalloc GameInput[Fighters.Length];
             switch (GameMode)
             {
@@ -322,7 +335,7 @@ namespace Game.Sim
 
             if (options.AlwaysRhythmCancel)
             {
-                rhythmCancel = (true, 0);
+                rhythmCancel = true;
             }
 
             // Push the current input into the input history, to read for buffering.
@@ -343,7 +356,7 @@ namespace Game.Sim
             bool maniaActive = GameMode == GameMode.Mania || GameMode == GameMode.ManiaStart;
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i].DoFrameStart(options, maniaActive);
+                Fighters[i].DoFrameStart(options, maniaActive, GameMode);
             }
 
             // Tick the state machine, making the character idle if an animation/stun finishes
@@ -360,8 +373,7 @@ namespace Game.Sim
             // This function internally appies changes to the fighter's velocity based on movement inputs
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i]
-                    .ApplyMovementState(SimFrame, options, rhythmCancel.shouldRhythmCancel, rhythmCancel.beatOffset);
+                Fighters[i].ApplyMovementState(SimFrame, options, rhythmCancel);
             }
 
             bool wasSuper0 = Fighters[0].IsSuperAttack;
@@ -370,15 +382,7 @@ namespace Game.Sim
             // If a player applies inputs to start a state at the start of the frame, we should apply those immediately
             for (int i = 0; i < Fighters.Length; i++)
             {
-                Fighters[i]
-                    .ApplyActiveState(
-                        SimFrame,
-                        options,
-                        options.Players[i].Character,
-                        rhythmCancel.shouldRhythmCancel,
-                        rhythmCancel.beatOffset,
-                        GameMode
-                    );
+                Fighters[i].ApplyActiveState(SimFrame, options, options.Players[i].Character, rhythmCancel, GameMode);
             }
 
             bool anySuperStarted =
@@ -519,16 +523,35 @@ namespace Game.Sim
             {
                 int attackerIndex = PendingRhythmComboAttacker;
                 PendingRhythmComboAttacker = -1;
+                int comboBeats = Fighters[attackerIndex].SuperComboBeats;
                 Fighters[attackerIndex].IsSuperAttack = false;
+                Fighters[attackerIndex].SuperComboBeats = 0;
                 HitstopFramesRemaining = ComboManager.StartRhythmCombo(
                     RealFrame,
                     ref Manias[attackerIndex],
-                    Fighters[attackerIndex].FacingDir,
                     options,
-                    options.Players[attackerIndex].Character,
                     this,
-                    attackerIndex
+                    attackerIndex,
+                    comboBeats
                 );
+            }
+
+            if (options.InfoOptions != null && options.InfoOptions.VerifyComboPrediction)
+            {
+                ComboVerifyDebug.CheckAtFrame(RealFrame, this);
+
+                // If a mania has terminated (natural end, missed note, fighter
+                // death, etc. — all paths clear EndFrame to NullFrame), drop
+                // any remaining snapshots for that attacker whose CompareFrame
+                // is still in the future. Without this, an early-failed combo
+                // would log spurious MISMATCHes for beats that never happened.
+                for (int i = 0; i < Manias.Length; i++)
+                {
+                    if (Manias[i].EndFrame == Frame.NullFrame)
+                    {
+                        ComboVerifyDebug.DiscardFutureSnapshots(i, RealFrame);
+                    }
+                }
             }
         }
 
@@ -553,16 +576,24 @@ namespace Game.Sim
             }
         }
 
-        private (bool, int) DoManiaStep(
+        private bool DoManiaStep(
             GameOptions options,
             (GameInput input, InputStatus status)[] inputs,
             Span<GameInput> outInputs
         )
         {
-            (bool, int) rhythmCancel = (false, 0);
+            bool rhythmCancel = false;
+
+            // Dissipate SuperCost super per 8 beats from the combo attacker.
+            sfloat dissipationPerFrame = options.Global.SuperCost / (sfloat)options.Global.Audio.BeatsToFrame(8);
 
             for (int i = 0; i < Manias.Length; i++)
             {
+                if (Manias[i].Enabled(RealFrame))
+                {
+                    Fighters[i].Super = Mathsf.Max(Fighters[i].Super - dissipationPerFrame, (sfloat)0);
+                }
+
                 Manias[i].Tick(RealFrame, inputs[i].input);
 
                 foreach (ManiaEvent ev in Manias[i].ManiaEvents)
@@ -573,9 +604,12 @@ namespace Game.Sim
                             GameMode = GameMode.Fighting;
                             ClearLockedHitstun();
                             break;
-                        case ManiaEventKind.Hit:
+                        case ManiaEventKind.Input:
                             outInputs[i].Flags |= ev.Note.HitInput;
-                            rhythmCancel = (true, ev.Offset);
+                            rhythmCancel = true;
+                            break;
+                        case ManiaEventKind.Hit:
+                            // View-only feedback event; no sim effect.
                             break;
                         case ManiaEventKind.Missed:
                             // Punish the missing fighter: stun for
@@ -590,6 +624,12 @@ namespace Game.Sim
                                 );
                             Fighters[i].Velocity =
                                 Fighters[i].BackwardVector * options.Global.ManiaFailKnockbackMagnitude;
+                            // Early-end penalty: deduct half of SuperCost
+                            // from the remaining super bar.
+                            Fighters[i].Super = Mathsf.Max(
+                                Fighters[i].Super - options.Global.SuperCost / (sfloat)2,
+                                (sfloat)0
+                            );
                             GameMode = GameMode.Fighting;
                             Manias[i].End();
                             ClearLockedHitstun();
@@ -900,7 +940,7 @@ namespace Game.Sim
             }
 
             sfloat mult = 1 + (sfloat)0.2f * (HypeMeter / options.Global.MaxHype) * (attacker.Owner * -2 + 1);
-            return Fighters[defender.Owner]
+            HitOutcome outcome = Fighters[defender.Owner]
                 .ApplyHit(
                     SimFrame,
                     Fighters[attacker.Owner].StateStart,
@@ -909,6 +949,11 @@ namespace Game.Sim
                     defender.Box.ClosestPointToCenter(attacker.Box),
                     mult
                 );
+            if (outcome.Kind == HitKind.Hit || outcome.Kind == HitKind.Blocked)
+            {
+                Fighters[attacker.Owner].AttackConnected = true;
+            }
+            return outcome;
         }
 
         private HitOutcome HandleCollision(GameOptions options, Physics<BoxProps>.Collision c)
