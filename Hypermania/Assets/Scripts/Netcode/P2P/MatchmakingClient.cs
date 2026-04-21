@@ -65,6 +65,18 @@ namespace Netcode.P2P
         /// </summary>
         public Action<string[]> OnCharacterSelectLaunch;
 
+        /// <summary>
+        /// Fires on remaining lobby members when another member departs the
+        /// current lobby — whether they explicitly left, disconnected
+        /// (e.g. quit the process), were kicked, or were banned. The arg is
+        /// the departed user's CSteamID. In-lobby screens (CharacterSelect,
+        /// LiveConnection) should treat this as "the other player is gone,
+        /// bail back to the Online lobby." Graceful Back sends go through
+        /// <see cref="OnBackRequested"/> instead; this event covers the
+        /// silent-departure cases where no chat message is sent.
+        /// </summary>
+        public Action<CSteamID> OnPeerLeft;
+
         public SteamMatchmakingClient()
         {
             if (!SteamManager.Initialized)
@@ -295,6 +307,18 @@ namespace Netcode.P2P
             Debug.Log(
                 $"[Matchmaking] OnLobbyChatUpdate: lobby={data.m_ulSteamIDLobby}, userChanged={data.m_ulSteamIDUserChanged}, makingChange={data.m_ulSteamIDMakingChange}, stateChange={data.m_rgfChatMemberStateChange}"
             );
+
+            const uint departureMask = (uint)(
+                EChatMemberStateChange.k_EChatMemberStateChangeLeft
+                | EChatMemberStateChange.k_EChatMemberStateChangeDisconnected
+                | EChatMemberStateChange.k_EChatMemberStateChangeKicked
+                | EChatMemberStateChange.k_EChatMemberStateChangeBanned
+            );
+            if ((data.m_rgfChatMemberStateChange & departureMask) != 0)
+            {
+                CSteamID departed = new CSteamID(data.m_ulSteamIDUserChanged);
+                OnPeerLeft?.Invoke(departed);
+            }
         }
 
         private void OnLobbyChatMessage(LobbyChatMsg_t data)

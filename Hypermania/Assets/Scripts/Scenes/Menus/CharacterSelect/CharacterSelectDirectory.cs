@@ -110,6 +110,7 @@ namespace Scenes.Menus.CharacterSelect
                 _matchmakingSubscription.OnBackRequested -= OnRemoteBackRequested;
                 _matchmakingSubscription.OnCharacterSelectLaunchRequested -= OnRemoteLaunchRequested;
                 _matchmakingSubscription.OnCharacterSelectLaunch -= OnLaunchBroadcast;
+                _matchmakingSubscription.OnPeerLeft -= OnRemotePeerLeft;
                 _matchmakingSubscription = null;
             }
             _remoteController?.Dispose();
@@ -273,7 +274,27 @@ namespace Scenes.Menus.CharacterSelect
             _matchmakingSubscription.OnBackRequested += OnRemoteBackRequested;
             _matchmakingSubscription.OnCharacterSelectLaunchRequested += OnRemoteLaunchRequested;
             _matchmakingSubscription.OnCharacterSelectLaunch += OnLaunchBroadcast;
+            _matchmakingSubscription.OnPeerLeft += OnRemotePeerLeft;
             return true;
+        }
+
+        /// <summary>
+        /// Remote peer vanished from the Steam lobby without sending a Back
+        /// message — most commonly because they quit the process outright.
+        /// Bail to the Online lobby locally; we can't round-trip a message
+        /// to someone who's already gone, so unlike <see cref="Back"/> we
+        /// skip the SendBackRequest step. OnlineBase stays loaded so the
+        /// local Steam lobby survives and the player lands back on the
+        /// Online screen still in their lobby.
+        /// </summary>
+        private void OnRemotePeerLeft(CSteamID departed)
+        {
+            if (_committed || _exiting)
+                return;
+            if (departed == SteamUser.GetSteamID())
+                return;
+            _exiting = true;
+            ExitToPreviousScene();
         }
 
         /// <summary>
