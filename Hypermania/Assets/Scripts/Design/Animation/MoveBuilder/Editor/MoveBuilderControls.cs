@@ -141,7 +141,8 @@ namespace Design.Animation.MoveBuilder.Editor
 
             state.Data.ComboEligible = EditorGUILayout.Toggle("Combo Eligible", state.Data.ComboEligible);
             state.Data.Followup = (CharacterState)EditorGUILayout.EnumPopup("Followup", state.Data.Followup);
-            state.Data.FollowupInput = (InputFlags)EditorGUILayout.EnumFlagsField("Followup Input", state.Data.FollowupInput);
+            state.Data.FollowupInput = (InputFlags)
+                EditorGUILayout.EnumFlagsField("Followup Input", state.Data.FollowupInput);
             EditorGUILayout.Space(6);
             EditorGUILayout.LabelField("Frame Data", EditorStyles.boldLabel);
             frame.FrameType = (FrameType)EditorGUILayout.EnumPopup("Frame Type", frame.FrameType);
@@ -229,7 +230,8 @@ namespace Design.Animation.MoveBuilder.Editor
                 p.HasTransition = EditorGUILayout.Toggle("Has Transition", p.HasTransition);
                 using (new EditorGUI.DisabledScope(!p.HasTransition))
                 {
-                    p.OnHitTransition = (CharacterState)EditorGUILayout.EnumPopup("On Hit Transition", p.OnHitTransition);
+                    p.OnHitTransition = (CharacterState)
+                        EditorGUILayout.EnumPopup("On Hit Transition", p.OnHitTransition);
                 }
             }
 

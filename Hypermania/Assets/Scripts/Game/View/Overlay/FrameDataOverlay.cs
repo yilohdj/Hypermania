@@ -119,7 +119,8 @@ namespace Game.View.Overlay
                 }
                 else
                 {
-                    _cells[i, baseIdx].SetType(state.SimFrame, displayState, displayStateStart, options.Players[i].Character);
+                    _cells[i, baseIdx]
+                        .SetType(state.SimFrame, displayState, displayStateStart, options.Players[i].Character);
                 }
                 _consecText[i, baseIdx].gameObject.SetActive(false);
                 int prevIdx = (baseIdx + _numColumns - 1) % _numColumns;

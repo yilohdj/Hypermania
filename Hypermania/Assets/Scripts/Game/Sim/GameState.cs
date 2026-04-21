@@ -995,9 +995,10 @@ namespace Game.Sim
             {
                 // Apply on-hit state transitions, which are not allowed on block
                 // TODO: what happens if trade?
-                Fighters[attacker.Owner].ProcessHit(SimFrame, attacker.Data, options.Players[attacker.Owner].Character);
+                Fighters[attacker.Owner]
+                    .ProcessHit(SimFrame, attacker.Data, options.Players[attacker.Owner].Character);
             }
-            
+
             if (outcome.Kind == HitKind.Hit || outcome.Kind == HitKind.Blocked)
             {
                 Fighters[attacker.Owner].AttackConnected = true;

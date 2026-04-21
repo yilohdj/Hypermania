@@ -63,7 +63,9 @@ namespace Design.Animation
             && KnockdownKind == other.KnockdownKind
             && HitstopTicks == other.HitstopTicks
             && BlockstopTicks == other.BlockstopTicks
-            && GrabPosition == other.GrabPosition && HasTransition == other.HasTransition && OnHitTransition == other.OnHitTransition;
+            && GrabPosition == other.GrabPosition
+            && HasTransition == other.HasTransition
+            && OnHitTransition == other.OnHitTransition;
 
         public override bool Equals(object obj) => obj is BoxProps other && Equals(other);
 
