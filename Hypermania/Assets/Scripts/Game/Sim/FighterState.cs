@@ -766,6 +766,18 @@ namespace Game.Sim
                 Position += teleport;
             }
 
+            HitboxData moveData = options.Players[Index].Character.GetHitboxData(State);
+            if (moveData != null && moveData.ApplyRootMotion)
+            {
+                int rmTick = frame - StateStart;
+                SVector2 prevOffset = rmTick > 0
+                    ? options.Players[Index].Character.GetFrameData(State, rmTick - 1).RootMotionOffset
+                    : SVector2.zero;
+                SVector2 rmDelta = curData.RootMotionOffset - prevOffset;
+                rmDelta.x *= FacingDir == FighterFacing.Left ? -1 : 1;
+                Position += rmDelta;
+            }
+
             if (curData.GravityEnabled && Position.y > options.Global.GroundY)
             {
                 Velocity.y += options.Global.Gravity * 1 / GameManager.TPS;
@@ -870,6 +882,10 @@ namespace Game.Sim
             foreach (var box in frameData.Boxes)
             {
                 SVector2 centerLocal = box.CenterLocal;
+                if (hitboxData != null && hitboxData.ApplyRootMotion)
+                {
+                    centerLocal -= frameData.RootMotionOffset;
+                }
                 if (FacingDir == FighterFacing.Left)
                 {
                     centerLocal.x *= -1;
