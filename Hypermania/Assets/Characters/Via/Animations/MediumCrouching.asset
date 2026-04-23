@@ -521,17 +521,17 @@ MonoBehaviour:
         OnHitTransition: 0
     - CenterLocal:
         x:
-          rawValue: 1068440255
+          rawValue: 1068404285
         y:
-          rawValue: 1056283108
+          rawValue: 1053165732
       SizeLocal:
         x:
-          rawValue: 1072962434
+          rawValue: 1072890494
         y:
-          rawValue: 1065808784
+          rawValue: 1062667380
       Props:
         Kind: 1
-        AttackKind: 0
+        AttackKind: 2
         Damage: 8
         HitstunTicks: 20
         BlockstunTicks: 13
@@ -604,17 +604,17 @@ MonoBehaviour:
         OnHitTransition: 0
     - CenterLocal:
         x:
-          rawValue: 1068440255
+          rawValue: 1068404285
         y:
-          rawValue: 1056283108
+          rawValue: 1053165732
       SizeLocal:
         x:
-          rawValue: 1072962434
+          rawValue: 1072890494
         y:
-          rawValue: 1065808784
+          rawValue: 1062667380
       Props:
         Kind: 1
-        AttackKind: 0
+        AttackKind: 2
         Damage: 8
         HitstunTicks: 20
         BlockstunTicks: 13
@@ -687,17 +687,17 @@ MonoBehaviour:
         OnHitTransition: 0
     - CenterLocal:
         x:
-          rawValue: 1068440255
+          rawValue: 1068404285
         y:
-          rawValue: 1056283108
+          rawValue: 1053165732
       SizeLocal:
         x:
-          rawValue: 1072962434
+          rawValue: 1072890494
         y:
-          rawValue: 1065808784
+          rawValue: 1062667380
       Props:
         Kind: 1
-        AttackKind: 0
+        AttackKind: 2
         Damage: 8
         HitstunTicks: 20
         BlockstunTicks: 13
@@ -770,17 +770,17 @@ MonoBehaviour:
         OnHitTransition: 0
     - CenterLocal:
         x:
-          rawValue: 1068440255
+          rawValue: 1068404285
         y:
-          rawValue: 1056283108
+          rawValue: 1053165732
       SizeLocal:
         x:
-          rawValue: 1072962434
+          rawValue: 1072890494
         y:
-          rawValue: 1065808784
+          rawValue: 1062667380
       Props:
         Kind: 1
-        AttackKind: 0
+        AttackKind: 2
         Damage: 8
         HitstunTicks: 20
         BlockstunTicks: 13
@@ -853,17 +853,17 @@ MonoBehaviour:
         OnHitTransition: 0
     - CenterLocal:
         x:
-          rawValue: 1068440255
+          rawValue: 1068404285
         y:
-          rawValue: 1056283108
+          rawValue: 1053165732
       SizeLocal:
         x:
-          rawValue: 1072962434
+          rawValue: 1072890494
         y:
-          rawValue: 1065808784
+          rawValue: 1062667380
       Props:
         Kind: 1
-        AttackKind: 0
+        AttackKind: 2
         Damage: 8
         HitstunTicks: 20
         BlockstunTicks: 13

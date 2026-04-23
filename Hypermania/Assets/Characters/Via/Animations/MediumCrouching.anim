@@ -263,7 +263,7 @@ AnimationClip:
         outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
       - serializedVersion: 3
         time: 0.15
-        value: {x: 0, y: 0, z: -16.196}
+        value: {x: 0, y: 0, z: -19.368}
         inSlope: {x: Infinity, y: Infinity, z: Infinity}
         outSlope: {x: Infinity, y: Infinity, z: Infinity}
         tangentMode: 0
@@ -2926,7 +2926,7 @@ AnimationClip:
         outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
       - serializedVersion: 3
         time: 0.15
-        value: {x: 1.631, y: 0.535, z: 0}
+        value: {x: 1.574, y: 0.416, z: 0}
         inSlope: {x: Infinity, y: Infinity, z: Infinity}
         outSlope: {x: Infinity, y: Infinity, z: Infinity}
         tangentMode: 0
@@ -4947,7 +4947,7 @@ AnimationClip:
         outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
       - serializedVersion: 3
         time: 0.15
-        value: {x: 1.2290943, y: -0.7816677, z: 1}
+        value: {x: 1.0834589, y: -0.61193234, z: 1}
         inSlope: {x: Infinity, y: Infinity, z: Infinity}
         outSlope: {x: Infinity, y: Infinity, z: Infinity}
         tangentMode: 0
@@ -9731,7 +9731,7 @@ AnimationClip:
         outWeight: 0
       - serializedVersion: 3
         time: 0.15
-        value: 1
+        value: 0
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 103
@@ -15161,7 +15161,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.15
-        value: 1.631
+        value: 1.574
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 103
@@ -15227,7 +15227,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.15
-        value: 0.535
+        value: 0.416
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 103
@@ -15491,7 +15491,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.15
-        value: -16.196
+        value: -19.368
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 103
@@ -15557,7 +15557,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.15
-        value: 1.2290943
+        value: 1.0834589
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 103
@@ -15623,7 +15623,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.15
-        value: -0.7816677
+        value: -0.61193234
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 103
@@ -36836,7 +36836,7 @@ AnimationClip:
         outWeight: 0
       - serializedVersion: 3
         time: 0.15
-        value: 1
+        value: 0
         inSlope: Infinity
         outSlope: Infinity
         tangentMode: 103
@@ -37706,7 +37706,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.z
-    path: OneOffs/straight whipsmear
+    path: Whip_Handle_bone/UpperWhip/LowerWhip/Tip_Whip_Bone
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -37718,7 +37718,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.y
-    path: OneOffs/straight whipsmear
+    path: Whip_Handle_bone/UpperWhip/LowerWhip/Tip_Whip_Bone
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -37730,7 +37730,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.x
-    path: OneOffs/straight whipsmear
+    path: Whip_Handle_bone/UpperWhip/LowerWhip/Tip_Whip_Bone
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -38534,7 +38534,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.x
-    path: Whip_Handle_bone/UpperWhip/LowerWhip/Tip_Whip_Bone
+    path: OneOffs/straight whipsmear
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -38546,7 +38546,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.y
-    path: Whip_Handle_bone/UpperWhip/LowerWhip/Tip_Whip_Bone
+    path: OneOffs/straight whipsmear
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -38558,7 +38558,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.z
-    path: Whip_Handle_bone/UpperWhip/LowerWhip/Tip_Whip_Bone
+    path: OneOffs/straight whipsmear
     classID: 4
     script: {fileID: 0}
     flags: 0
